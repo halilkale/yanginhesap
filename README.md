@@ -5,7 +5,16 @@
 Her satır, dayandığı **madde / ek numarasıyla** raporlanır ve bir durum alır:
 `UYGUN`, `UYGUN DEĞİL`, `GEREKLİ` (yapılması zorunlu önlem), `KOŞULLU UYGUN`, `VERİ GİRİLMEDİ`, `GEREKMEZ`, `BİLGİ`.
 
-## Kurulum ve çalıştırma
+## Windows .exe (kurulum gerektirmez)
+
+Masaüstü arayüzlü sürüm `masaustu.py` dosyasıdır. GitHub Actions her güncellemede Windows için `YanginHesap.exe` derler ve
+**Releases → "YanginHesap.exe (Windows)"** sayfasında yayınlar. İndirip çift tıklamanız yeterlidir (Python gerekmez).
+Windows "bilinmeyen yayıncı" uyarısı verirse *Ek bilgi → Yine de çalıştır* seçin (exe dijital olarak imzalı değildir).
+
+Kendiniz derlemek isterseniz (Windows'ta): `pip install -r requirements-exe.txt` ardından
+`pyinstaller --noconfirm --onefile --windowed --name YanginHesap --collect-data docx --collect-data openpyxl masaustu.py`
+
+## Kurulum ve çalıştırma (web arayüzü)
 
 | Sistem | Yol |
 |---|---|
@@ -58,7 +67,8 @@ python -m pytest -q
 ## Dosya yapısı
 
 ```
-app.py                  Streamlit arayüzü
+app.py                  Streamlit (web) arayüzü
+masaustu.py             Tkinter masaüstü arayüzü (.exe bundan derlenir)
 yangin/tablolar.py      Yönetmelik ekleri (tablolar)
 yangin/modeller.py      Girdi ve sonuç modelleri
 yangin/hesaplar.py      Hesap modülleri (her biri madde numarasına bağlı)

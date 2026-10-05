@@ -1,0 +1,58 @@
+name: Windows exe derle
+
+on:
+  push:
+    branches: [main, "claude/**"]
+    paths: ["yangin/**", "masaustu.py", "requirements-exe.txt", ".github/workflows/exe.yml", "tests/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  exe:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-exe.txt
+
+      - name: Bağımlılıkları kur
+        run: pip install -r requirements-exe.txt pytest
+
+      - name: Testler
+        run: python -m pytest -q
+
+      - name: exe derle
+        run: >
+          pyinstaller --noconfirm --clean --onefile --windowed
+          --name YanginHesap --collect-data docx --collect-data openpyxl
+          masaustu.py
+
+      - name: exe kendini sınasın
+        shell: pwsh
+        run: |
+          $p = Start-Process -FilePath dist\YanginHesap.exe -ArgumentList "--selftest" -Wait -PassThru
+          if ($p.ExitCode -ne 0) { throw "exe kendini sinama basarisiz: kod $($p.ExitCode)" }
+          Write-Host "exe kendini sinama tamam"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: YanginHesap-windows
+          path: dist/YanginHesap.exe
+
+      - name: İndirilebilir sürüm olarak yayınla
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete exe-son --yes --cleanup-tag 2>$null
+          gh release create exe-son dist/YanginHesap.exe `
+            --repo ${{ github.repository }} `
+            --target ${{ github.sha }} `
+            --title "YanginHesap.exe (Windows)" `
+            --notes "Son derleme: ${{ github.sha }}. Kurulum gerektirmez; YanginHesap.exe dosyasına çift tıklayın."
