@@ -219,3 +219,11 @@ def test_hepsi_calisir_ve_json():
     g2 = Girdi.from_json(g.to_json())
     assert len(H.hesapla(g2)) == len(s)
     assert H.ozet(s)
+
+
+def test_pompa_hy_kontrolu():
+    from yangin.modeller import KOSULLU
+    g = Girdi(kullanim="buro", tehlike="OT2", statik_yukseklik_mSS=20, boru_kaybi_mSS=6.06, akma_basinci_mSS=70, pompa_anma_basma_mSS=100)
+    assert bul(H.su_deposu_ve_pompa(g), "≥ Hy").durum == UYGUN        # 100 ≥ 96,06
+    g.pompa_anma_basma_mSS = 90
+    assert bul(H.su_deposu_ve_pompa(g), "≥ Hy").durum == KOSULLU

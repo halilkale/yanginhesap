@@ -10,6 +10,7 @@ import datetime as dt
 import pandas as pd
 import streamlit as st
 
+from yangin import form as FORM
 from yangin import hesaplar as H
 from yangin import rapor
 from yangin import tablolar as T
@@ -224,6 +225,27 @@ with st.sidebar:
             st.rerun()
         except Exception as e:  # noqa: BLE001
             st.error(f"Dosya okunamadı: {e}")
+    st.divider()
+    st.subheader("İşveren formu")
+    st.download_button("Boş işveren formunu indir (.xlsx)", FORM.sablon_olustur(), file_name="Isveren_Veri_Toplama_Formu.xlsx",
+                       mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", width="stretch")
+    form_dosya = st.file_uploader("Doldurulmuş formu aktar (.xlsx)", type=["xlsx"], key="form_yukle")
+    if form_dosya is not None and st.session_state.get("son_form") != form_dosya.file_id:
+        try:
+            g_form, uyari, eksik = FORM.formdan_oku(form_dosya.getvalue())
+            durum_yukle(g_form)
+            st.session_state["son_form"] = form_dosya.file_id
+            st.session_state["form_mesaj"] = (eksik, uyari)
+            st.rerun()
+        except Exception as e:  # noqa: BLE001
+            st.error(f"Form okunamadı: {e}")
+    if "form_mesaj" in st.session_state:
+        eksik, uyari = st.session_state["form_mesaj"]
+        st.success("Form aktarıldı.")
+        if eksik:
+            st.warning("İşverenden istenecek eksik bilgiler:\n\n" + "\n".join(f"- {e}" for e in eksik))
+        if uyari:
+            st.info("Uyarılar:\n\n" + "\n".join(f"- {u}" for u in uyari))
     st.divider()
     st.markdown("**Nasıl kullanılır?**\n1. Sekmeleri soldan sağa doldurun.\n2. *Sonuçlar ve Rapor* sekmesinde hesap sonuçlarını görün.\n3. Excel/Word raporunu indirin.\n\n"
                 "Boş bırakılan (0) ölçülü değerler için *VERİ GİRİLMEDİ* uyarısı üretilir ve gerekli değer yine de hesaplanır.")

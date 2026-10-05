@@ -12,7 +12,7 @@ def ornek_fabrika() -> Girdi:
         tasiyici="celik", kolay_alevlenici=True,
         spr_yukseklik_h=10, es_zamanli_dolap=2, hidrant_risk="riskli",
         statik_yukseklik_mSS=14, boru_kaybi_mSS=18, akma_basinci_mSS=70,
-        pompa_anma_debi_m3h=150, pompa_anma_basma_mSS=100, pompa_kapali_vana_basma_mSS=130, pompa_150_debi_basma_mSS=70,
+        pompa_anma_debi_m3h=150, pompa_anma_basma_mSS=110, pompa_kapali_vana_basma_mSS=140, pompa_150_debi_basma_mSS=75,
         mevcut_su_deposu_m3=200,
         calisan_sayisi=180, kacis_yolu_uzunlugu_m=120, itfaiye_son_nokta_mesafe_m=30,
         ic_yol_genislik_m=6, ic_yol_ic_yaricap_m=12, ic_yol_dis_yaricap_m=16, ic_yol_egim_yuzde=4, ic_yol_serbest_yukseklik_m=4.5, ic_yol_tasima_yuku_ton=20,

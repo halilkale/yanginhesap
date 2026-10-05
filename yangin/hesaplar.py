@@ -577,6 +577,14 @@ def su_deposu_ve_pompa(g: Girdi) -> list[Sonuc]:
             s.append(Sonuc(B, "Yangın pompası basma yüksekliği Hy", "—", "mSS", KONTROL, "Madde 93",
                            "Hy = statik yükseklik + tesisat basınç kayıpları + akma basıncı. Kritik devre hidrolik hesabından statik yükseklik ve boru kaybı girilmelidir."))
         # Pompa karakteristiği
+        if g.pompa_anma_basma_mSS > 0 and (g.statik_yukseklik_mSS or g.boru_kaybi_mSS):
+            if g.pompa_anma_basma_mSS >= hy:
+                s.append(Sonuc(B, "Pompa anma basma yüksekliği ≥ Hy", g.pompa_anma_basma_mSS, "mSS", UYGUN, "Madde 93",
+                               f"Anma basma yüksekliği {g.pompa_anma_basma_mSS:g} mSS ≥ gerekli Hy {hy:.1f} mSS."))
+            else:
+                s.append(Sonuc(B, "Pompa anma basma yüksekliği ≥ Hy", g.pompa_anma_basma_mSS, "mSS", KOSULLU, "Madde 93",
+                               f"Anma basma yüksekliği {g.pompa_anma_basma_mSS:g} mSS < gerekli Hy {hy:.1f} mSS. Pompa eğrisinde toplam debideki ({qp:.1f} m³/h) "
+                               "basma yüksekliği Hy'ye eşit veya büyükse yeterli olabilir; eğri noktası ile doğrulayın."))
         if g.pompa_anma_basma_mSS > 0:
             if g.pompa_kapali_vana_basma_mSS > 0:
                 lim = 1.4 * g.pompa_anma_basma_mSS

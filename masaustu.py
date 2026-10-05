@@ -11,6 +11,7 @@ import sys
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 
+from yangin import form as FORM
 from yangin import hesaplar as H
 from yangin import rapor
 from yangin import tablolar as T
@@ -18,22 +19,10 @@ from yangin.modeller import (
     BILGI, GEREKLI, GEREKMEZ, KONTROL, KOSULLU, UYGUN, UYGUN_DEGIL,
     DumanMahali, Girdi, Kapi, Kat, Mahal, Merdiven, SivirTank,
 )
+from yangin.etiketler import *  # noqa: F401,F403
+from yangin.etiketler import _bool, _f, _i
 from yangin.ornek import ornek_fabrika
 
-LIST_ALANLAR = {"katlar", "merdivenler", "kapilar", "duman_mahalleri", "sivi_tanklar"}
-EK5A_AD = [a for a, _, _ in T.EK5A]
-EK5A_KATSAYI = {a: k for a, k, _ in T.EK5A}
-CIKIS_TURLERI = {"dis_kapi": "Dışarı çıkış kapısı", "diger_kapi": "Diğer kapı / koridor kapısı", "merdiven": "Kaçış merdiveni", "koridor": "Rampa / koridor"}
-YONLER = {"iki": "İki yön", "tek": "Tek yön"}
-TASIYICI = {"betonarme": "Betonarme", "celik": "Çelik", "ahsap": "Ahşap", "kagir": "Kâgir"}
-YAGMURLAMA = {"islak": "Islak / ön etkili", "kuru": "Kuru / değişken"}
-DOLAP = {"yari_sert": "Yarı-sert hortum Ø25 (100 l/dk)", "yassi": "Yassı hortum DN50 (400 l/dk)"}
-HIDRANT = {"cok_riskli": "Çok riskli (50 m)", "riskli": "Riskli (100 m)", "orta": "Orta riskli (125 m)", "az": "Az riskli (150 m)"}
-ISARET = {"icten": "İçeriden/arkadan aydınlatılan (×200)", "distan": "Dışarıdan/kenardan aydınlatılan (×100)"}
-YAKIT = {"bodrum_varil": "Bodrumda varil", "bodrum_sac": "Bodrumda sızıntısız sac kap", "bodrum_komur": "Bina içi bodrum, 120 dk kâgir oda",
-         "bina_disi": "Bina dışında yeraltı/yerüstü tank", "bagimsiz": "Ayrı, bağımsız tek katlı bina"}
-LPG_TUR = {"yerustu": "Yerüstü", "yeralti": "Yeraltı"}
-SIVI_YER = {"zemin_ustu": "Zemin seviyesi ve üstündeki depo hacimleri", "acikta": "Açıkta kurulu depolar"}
 
 # --------------------------------------------------------------------------
 # Alan tanımları: (alan, etiket, tür, seçenekler)  tür: t=metin f=ondalık i=tam b=evet/hayır c=seçim
@@ -136,45 +125,8 @@ for ad in (f.name for f in dataclasses.fields(Girdi)):
 # --------------------------------------------------------------------------
 # Liste tabloları: (anahtar, başlık, tür, seçenekler, genişlik)
 # --------------------------------------------------------------------------
-TABLOLAR = {
-    "mahal": [("kat", "Kat", "t", None, 110), ("mahal", "Mahal", "t", None, 150), ("tur", "Tür (Ek-5/A)", "c", EK5A_AD, 280),
-              ("alan", "Alan (m²)", "f", None, 80), ("ozel", "Özel katsayı (m²/kişi)", "f", None, 120),
-              ("belirli", "Belirli kişi", "f", None, 80), ("sayilir", "Sayılır", "b", None, 60)],
-    "kat": [("kat", "Kat", "t", None, 110), ("cikis", "Çıkış sayısı", "i", None, 80), ("tur", "Çıkış türü", "c", list(CIKIS_TURLERI.values()), 190),
-            ("genislik", "Mevcut toplam gen. (cm)", "f", None, 130), ("tekil", "En dar tekil (cm)", "f", None, 110),
-            ("yon", "Yön", "c", list(YONLER.values()), 80), ("mesafe", "En uzak mesafe (m)", "f", None, 120),
-            ("kus", "Kuş uçuşu (m)", "f", None, 90), ("cikmaz", "Çıkmaz koridor (m)", "f", None, 120),
-            ("diyagonal", "Mekân diyagonali (m)", "f", None, 130), ("arasi", "Çıkışlar arası (m)", "f", None, 120)],
-    "merdiven": [("ad", "Ad", "t", None, 70), ("gen", "Genişlik (cm)", "f", None, 90), ("riht", "Rıht (mm)", "f", None, 70), ("basis", "Basış (mm)", "f", None, 70),
-                 ("sbasamak", "Sahanlık arası basamak", "i", None, 130), ("skot", "Sahanlık arası kot (cm)", "f", None, 130),
-                 ("bas", "Baş yüksekliği (cm)", "f", None, 120), ("kat", "Hizmet verilen kat", "i", None, 110),
-                 ("kapi", "Kapı dayanımı (dk)", "f", None, 110), ("duvar", "Duvar dayanımı (dk)", "f", None, 110),
-                 ("kullanici", "Kattaki kullanıcı", "f", None, 100), ("dengeli", "Dengelenmiş", "b", None, 80)],
-    "kapi": [("ad", "Ad", "t", None, 90), ("gen", "Temiz genişlik (cm)", "f", None, 120), ("yuk", "Yükseklik (cm)", "f", None, 100),
-             ("kanat", "Kanat", "i", None, 60), ("kisi", "Mekân kişi yükü", "f", None, 110), ("yone", "Kaçış yönüne açılıyor", "b", None, 140),
-             ("esik", "Eşik var", "b", None, 70), ("kuvvet", "Açma kuvveti (N)", "f", None, 110)],
-    "duman": [("ad", "Ad", "t", None, 160), ("tur", "Tür", "c", ["kazan", "otopark", "bodrum_depo", "diger"], 120),
-              ("alan", "Alan (m²)", "f", None, 100), ("yuk", "Yükseklik (m)", "f", None, 100)],
-    "tank": [("ad", "Ad", "t", None, 160), ("sinif", "Sınıf", "c", list(T.IA_ESDEGER_BOLEN), 80), ("hacim", "Hacim (L)", "f", None, 100),
-             ("tur", "Tür", "c", ["yerustu", "yeralti", "depo_icinde"], 120)],
-}
 
 DURUM_RENK = {k: "#" + v for k, v in rapor.DURUM_RENK.items()}
-
-
-def _f(x, d=0.0) -> float:
-    try:
-        return float(str(x).replace(",", "."))
-    except (TypeError, ValueError):
-        return d
-
-
-def _i(x, d=0) -> int:
-    return int(round(_f(x, d)))
-
-
-def _bool(x) -> bool:
-    return str(x) in ("1", "True", "true", "Evet", "✔")
 
 
 # --------------------------------------------------------------------------
@@ -333,6 +285,8 @@ class Uygulama(tk.Tk):
         self._kacis_sekmesi()
         self._merdiven_sekmesi()
         self._sonuc_sekmesi()
+        self.defter.insert(1, self.f_kacis)       # Genel → Kullanıcı yükü → Merdiven → Su ... sırası
+        self.defter.insert(2, self.f_merdiven)
         self.yukle_girdi(Girdi(tarih=dt.date.today().strftime("%d.%m.%Y")))
         self.durum = ttk.Label(self, text="Hazır. Sekmeleri doldurup 'Hesapla' düğmesine basın.", anchor="w", relief="sunken")
         self.durum.pack(fill="x", side="bottom")
@@ -351,11 +305,14 @@ class Uygulama(tk.Tk):
         cubuk = ttk.Frame(self)
         cubuk.pack(fill="x", padx=6, pady=6)
         ttk.Button(cubuk, text="▶ Hesapla", style="Hesapla.TButton", command=self.hesapla).pack(side="left", padx=2)
-        ttk.Button(cubuk, text="Excel raporu (.xlsx)", command=lambda: self.rapor_kaydet("xlsx")).pack(side="left", padx=2)
-        ttk.Button(cubuk, text="Word raporu (.docx)", command=lambda: self.rapor_kaydet("docx")).pack(side="left", padx=2)
+        ttk.Button(cubuk, text="Excel raporu", command=lambda: self.rapor_kaydet("xlsx")).pack(side="left", padx=2)
+        ttk.Button(cubuk, text="Word raporu", command=lambda: self.rapor_kaydet("docx")).pack(side="left", padx=2)
         ttk.Separator(cubuk, orient="vertical").pack(side="left", fill="y", padx=8)
         ttk.Button(cubuk, text="Projeyi aç", command=self.proje_ac).pack(side="left", padx=2)
         ttk.Button(cubuk, text="Projeyi kaydet", command=self.proje_kaydet).pack(side="left", padx=2)
+        ttk.Separator(cubuk, orient="vertical").pack(side="left", fill="y", padx=8)
+        ttk.Button(cubuk, text="Boş işveren formu", command=self.bos_form_kaydet).pack(side="left", padx=2)
+        ttk.Button(cubuk, text="Formu içe aktar", command=self.form_ice_aktar).pack(side="left", padx=2)
         ttk.Separator(cubuk, orient="vertical").pack(side="left", fill="y", padx=8)
         ttk.Button(cubuk, text="Örnek fabrika", command=lambda: self.yukle_girdi(ornek_fabrika())).pack(side="left", padx=2)
         ttk.Button(cubuk, text="Sıfırla", command=lambda: self.yukle_girdi(Girdi(tarih=dt.date.today().strftime("%d.%m.%Y")))).pack(side="left", padx=2)
@@ -399,6 +356,7 @@ class Uygulama(tk.Tk):
     def _kacis_sekmesi(self):
         f = ttk.Frame(self.defter)
         self.defter.add(f, text="Kullanıcı yükü ve kaçış")
+        self.f_kacis = f
         ttk.Label(f, wraplength=1200, justify="left", foreground="#1F3864",
                   text="Önce 'Mahaller' tablosuna her katın mahallerini (alan, Ek-5/A türü) girin; ardından 'Kat kaçış verileri' tablosunda aynı kat adlarıyla çıkış bilgilerini girin. "
                        "Aynı anda kullanılmayan mahaller (tuvalet, soyunma, depo) için 'Sayılır' işaretini kaldırın (Madde 31(6)). Ek-5/A'da ilk satırlar net, diğerleri brüt alan esaslıdır."
@@ -412,6 +370,7 @@ class Uygulama(tk.Tk):
     def _merdiven_sekmesi(self):
         f = ttk.Frame(self.defter)
         self.defter.add(f, text="Merdiven, kapı, duman, tank")
+        self.f_merdiven = f
         self.t_merdiven = TabloDuzenleyici(f, TABLOLAR["merdiven"], "Kaçış merdivenleri (Madde 38–46)")
         self.t_merdiven.pack(fill="both", expand=True, padx=6)
         self.t_kapi = TabloDuzenleyici(f, TABLOLAR["kapi"], "Kaçış yolu kapıları (Madde 47)")
@@ -517,33 +476,8 @@ class Uygulama(tk.Tk):
             else:
                 veri[ad] = v.get()
         g = Girdi(**veri)
-        ters_cikis = {b: a for a, b in CIKIS_TURLERI.items()}
-        ters_yon = {b: a for a, b in YONLER.items()}
-        katlar: dict[str, Kat] = {}
-        for r in self.t_kat.satirlar():
-            ad = r["kat"] or "Kat"
-            katlar[ad] = Kat(ad=ad, cikis_sayisi=_i(r["cikis"], 2), cikis_turu=ters_cikis.get(r["tur"], "dis_kapi"), mevcut_genislik_cm=_f(r["genislik"]),
-                             tekil_cikis_genislik_cm=_f(r["tekil"]), yon=ters_yon.get(r["yon"], "iki"), en_uzak_mesafe_m=_f(r["mesafe"]),
-                             kus_ucusu_mesafe_m=_f(r["kus"]), cikmaz_mesafe_m=_f(r["cikmaz"]), mekan_diyagonal_m=_f(r["diyagonal"]),
-                             cikislar_arasi_mesafe_m=_f(r["arasi"]))
-        for r in self.t_mahal.satirlar():
-            kad = r["kat"] or "Kat"
-            katlar.setdefault(kad, Kat(ad=kad))
-            ozel = _f(r["ozel"])
-            katsayi = ozel if ozel > 0 else EK5A_KATSAYI.get(r["tur"], 10.0)
-            bel = _f(r["belirli"])
-            katlar[kad].mahaller.append(Mahal(ad=r["mahal"] or "Mahal", alan=_f(r["alan"]), katsayi=katsayi, kisi_belirli=bel if bel > 0 else None,
-                                              sayilir=bool(r["sayilir"])))
-        g.katlar = list(katlar.values())
-        g.merdivenler = [Merdiven(ad=r["ad"] or "KM", genislik_cm=_f(r["gen"]), rihts_mm=_f(r["riht"]), basamak_genislik_mm=_f(r["basis"]),
-                                  sahanlik_arasi_basamak=_i(r["sbasamak"]), sahanlik_arasi_kot_cm=_f(r["skot"]), bas_yuksekligi_cm=_f(r["bas"]),
-                                  hizmet_verilen_kat=_i(r["kat"], 1), kapi_dayanim_dk=_f(r["kapi"]), duvar_dayanim_dk=_f(r["duvar"]),
-                                  kullanici_sayisi_kat=_f(r["kullanici"]), dengelenmis=bool(r["dengeli"])) for r in self.t_merdiven.satirlar()]
-        g.kapilar = [Kapi(ad=r["ad"] or "K", temiz_genislik_cm=_f(r["gen"]), yukseklik_cm=_f(r["yuk"]), kanat_sayisi=_i(r["kanat"], 1), kisi_yuku=_f(r["kisi"]),
-                          kacis_yonune_aciliyor=bool(r["yone"]), esik_var=bool(r["esik"]), acma_kuvveti_N=_f(r["kuvvet"])) for r in self.t_kapi.satirlar()]
-        g.duman_mahalleri = [DumanMahali(ad=r["ad"] or "Mahal", tur=r["tur"] or "diger", alan_m2=_f(r["alan"]), yukseklik_m=_f(r["yuk"], 3.0)) for r in self.t_duman.satirlar()]
-        g.sivi_tanklar = [SivirTank(ad=r["ad"] or "Tank", sinif=r["sinif"] or "II", hacim_L=_f(r["hacim"]), tur=r["tur"] or "yerustu") for r in self.t_tank.satirlar()]
-        return g
+        return tablolari_uygula(g, self.t_mahal.satirlar(), self.t_kat.satirlar(), self.t_merdiven.satirlar(),
+                                self.t_kapi.satirlar(), self.t_duman.satirlar(), self.t_tank.satirlar())
 
     # ---- işlemler
     def hesapla(self):
@@ -610,6 +544,37 @@ class Uygulama(tk.Tk):
             except Exception:  # noqa: BLE001
                 pass
 
+    def bos_form_kaydet(self):
+        yol = filedialog.asksaveasfilename(defaultextension=".xlsx", initialfile="Isveren_Veri_Toplama_Formu.xlsx", filetypes=[("Excel", "*.xlsx")])
+        if yol:
+            with open(yol, "wb") as f:
+                f.write(FORM.sablon_olustur())
+            self.durum.config(text=f"İşveren formu kaydedildi: {yol}")
+            messagebox.showinfo("İşveren formu", "Boş form kaydedildi. İşverene gönderin; doldurulmuş hali 'Doldurulmuş formu aktar' ile programa alınır.")
+
+    def form_ice_aktar(self):
+        yol = filedialog.askopenfilename(filetypes=[("Excel", "*.xlsx")])
+        if not yol:
+            return
+        try:
+            with open(yol, "rb") as f:
+                g, uyari, eksik = FORM.formdan_oku(f.read())
+        except Exception as e:  # noqa: BLE001
+            messagebox.showerror("Form okunamadı", f"{type(e).__name__}: {e}")
+            return
+        self.yukle_girdi(g)
+        ozet = f"Form aktarıldı: {os.path.basename(yol)}\n"
+        if eksik:
+            ozet += f"\nİşverenden istenmesi gereken EKSİK bilgiler ({len(eksik)}):\n- " + "\n- ".join(eksik[:25])
+            if len(eksik) > 25:
+                ozet += f"\n... ve {len(eksik) - 25} madde daha"
+        if uyari:
+            ozet += f"\n\nUyarılar ({len(uyari)}):\n- " + "\n- ".join(uyari[:15])
+        if not eksik and not uyari:
+            ozet += "\nEksik veya hatalı alan yok."
+        self.durum.config(text=f"Form aktarıldı; {len(eksik)} eksik, {len(uyari)} uyarı.")
+        messagebox.showinfo("Form aktarıldı", ozet + "\n\nBilgileri sekmelerde kontrol edip 'Hesapla'ya basın.")
+
     def proje_kaydet(self):
         yol = filedialog.asksaveasfilename(defaultextension=".json", initialfile=(self.vars["proje_adi"].get() or "proje") + ".json",
                                            filetypes=[("Proje dosyası", "*.json")])
@@ -639,6 +604,9 @@ def kendini_sina() -> int:
             with open(os.path.join(d, ad), "wb") as f:
                 f.write(veri)
             assert os.path.getsize(os.path.join(d, ad)) > 5000, ad
+    g2, uyari, _eksik = FORM.formdan_oku(FORM.doldurulmus_form(g))
+    assert not uyari and len(H.hesapla(g2)) == len(s), "form gidiş-dönüş"
+    assert len(FORM.sablon_olustur()) > 10000
     app = Uygulama()
     app.yukle_girdi(g)
     app.hesapla()

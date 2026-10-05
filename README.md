@@ -14,6 +14,14 @@ Windows "bilinmeyen yayıncı" uyarısı verirse *Ek bilgi → Yine de çalışt
 Kendiniz derlemek isterseniz (Windows'ta): `pip install -r requirements-exe.txt` ardından
 `pyinstaller --noconfirm --onefile --windowed --name YanginHesap --collect-data docx --collect-data openpyxl masaustu.py`
 
+## İşveren veri toplama formu ve kullanım kılavuzu
+
+* `belgeler/Isveren_Veri_Toplama_Formu.xlsx` — işverene gönderilecek Excel formu (102 soru, açılır listeler, "kim doldurur" etiketi, belge kontrol listesi, 6 tablo). Programdaki **Boş işveren formu** düğmesi de aynısını üretir.
+* `belgeler/Ornek_Doldurulmus_Form.xlsx` — örnek fabrikayla doldurulmuş form (nasıl doldurulacağını gösterir).
+* `belgeler/Kullanim_Kilavuzu.docx` — ayrıntılı kullanım kılavuzu (kurulum, form, alan alan açıklama, sonuçların okunması, formüller, çözümlü örnek, SSS).
+* Doldurulmuş form, programda **Formu içe aktar** ile tek tıkla alınır; eksik zorunlu bilgiler ve hatalı değerler listelenir.
+* Belgeler `python araclar/belge_uret.py` ile yeniden üretilir (alan tanımları `yangin/alanlar.py` içindedir; form, aktarma ve kılavuz aynı kaynaktan beslenir).
+
 ## Kurulum ve çalıştırma (web arayüzü)
 
 | Sistem | Yol |
@@ -74,5 +82,10 @@ yangin/modeller.py      Girdi ve sonuç modelleri
 yangin/hesaplar.py      Hesap modülleri (her biri madde numarasına bağlı)
 yangin/rapor.py         Excel ve Word rapor üreticileri
 yangin/ornek.py         Örnek fabrika projesi
+yangin/alanlar.py       Form/kılavuz alan tanımları (işveren dilinde açıklamalar)
+yangin/form.py          İşveren formu üretimi ve içe aktarma
+yangin/kilavuz.py       Kullanım kılavuzu üretimi
+araclar/                Belge ve ekran görüntüsü üreten betikler
+belgeler/               Hazır form ve kılavuz
 tests/                  Kılavuz örnekleriyle doğrulama testleri
 ```
