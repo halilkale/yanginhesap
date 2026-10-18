@@ -349,6 +349,21 @@ def kilavuz_olustur(ekran_dizini: str | None = None) -> bytes:
     _madde(doc, "Kat adları iki tabloda (Mahaller ve Kat kaçış verileri) aynı yazılmalıdır; aksi halde kat için çıkış verisi eşleşmez.")
     _madde(doc, "Sayıları virgül veya nokta ile yazabilirsiniz (12,5 veya 12.5).")
 
+    doc.add_heading("5.4 Mevzuat ipuçları (sarı bilgi penceresi)", 2)
+    _p(doc, "Programdaki her veri alanının etiketinin veya giriş kutusunun üzerine fareyi getirip yaklaşık yarım saniye bekleyin: sarı bir bilgi penceresi açılır. "
+            "Pencere fareyi çektiğinizde kapanır. İçeriği:")
+    _madde(doc, "alanın adı ve nasıl doldurulacağı (koyu başlık ve açıklama);", "Açıklama: ")
+    _madde(doc, "birim, bilginin hangi belgeden bulunacağı ve kimin dolduracağı (küçük yazı);", "Künye: ")
+    _madde(doc, "alanın hangi hesaba girdiği ve dayanak madde numaraları;", "Programdaki etkisi: ")
+    _madde(doc, "ilgili yönetmelik maddesinin (fıkra/bent) kendi metni ve ilgili ekin (Ek-3/C, Ek-4, Ek-5/B vb.) özeti (mavi italik yazı).", "Mevzuat metni: ")
+    _resim(doc, ekran("10_ipucu_alan.png"), "Şekil — 'Yapı yüksekliği' alanının üzerine gelince açılan sarı ipucu (Madde 4 tanımı)")
+    _p(doc, "Aynı ipucu tablolarda da çalışır: sütun başlığının (veya hücrenin) üzerine gelince o sütunla ilgili madde metni görünür; "
+            "'Satır ekle/Düzenle' penceresindeki etiketlerde de aynı bilgi vardır. Sonuçlar sekmesinde bir satırın üzerine gelince o satırın dayanak maddesinin metni gösterilir.")
+    _resim(doc, ekran("11_ipucu_tablo.png"), "Şekil — Tablo sütun başlığında ipucu (Madde 33(1) ve Ek-5/B)")
+    _resim(doc, ekran("12_ipucu_sonuc.png"), "Şekil — Sonuç satırında dayanak madde metni")
+    _not(doc, "İpucu metinleri yönetmelik PDF'inden otomatik ayıklanmıştır (yangin/mevzuat_metin.py). Yönetmelik değişirse araclar/mevzuat_cikar.py ile yeniden üretilir. "
+              "Metin, bilgilendirme amaçlı alıntıdır; resmî metin için Resmî Gazete'deki güncel yönetmeliğe bakın.", "Not")
+
     # ---------------- 6 Veri girişi
     doc.add_heading("6. Verilerin girilmesi: sekme sekme, alan alan", 1)
     _p(doc, "Bu bölümdeki tablolar, işveren formundaki sorularla birebir aynıdır. 'Kim' sütunu: İ = işveren (zorunlu), İv = işveren (varsa), M = mühendis/firma. "

@@ -14,6 +14,11 @@ Windows "bilinmeyen yayıncı" uyarısı verirse *Ek bilgi → Yine de çalışt
 Kendiniz derlemek isterseniz (Windows'ta): `pip install -r requirements-exe.txt` ardından
 `pyinstaller --noconfirm --onefile --windowed --name YanginHesap --collect-data docx --collect-data openpyxl masaustu.py`
 
+## Mevzuat ipuçları (sarı bilgi penceresi)
+
+Masaüstü arayüzünde herhangi bir alanın etiketinin veya kutusunun (tablolarda sütun başlığının, sonuç satırlarının) üzerine gelince, ilgili **yönetmelik madde/fıkra metni** ve ek özeti sarı bir pencerede görünür.
+Metinler yönetmelik PDF'inden `python araclar/mevzuat_cikar.py "<pdf>"` ile ayıklanır (`yangin/mevzuat_metin.py`); web arayüzünde aynı içerik alanın (?) simgesinde görünür.
+
 ## İşveren veri toplama formu ve kullanım kılavuzu
 
 * `belgeler/Isveren_Veri_Toplama_Formu.xlsx` — işverene gönderilecek Excel formu (102 soru, açılır listeler, "kim doldurur" etiketi, belge kontrol listesi, 6 tablo). Programdaki **Boş işveren formu** düğmesi de aynısını üretir.

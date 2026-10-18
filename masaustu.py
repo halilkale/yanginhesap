@@ -13,6 +13,7 @@ from tkinter import filedialog, messagebox, ttk
 
 from yangin import form as FORM
 from yangin import hesaplar as H
+from yangin import mevzuat as MEV
 from yangin import rapor
 from yangin import tablolar as T
 from yangin.modeller import (
@@ -132,6 +133,107 @@ DURUM_RENK = {k: "#" + v for k, v in rapor.DURUM_RENK.items()}
 # --------------------------------------------------------------------------
 # Yardımcı bileşenler
 # --------------------------------------------------------------------------
+SARI = "#FFF7A8"          # ipucu penceresi zemin rengi (sarı)
+SARI_KENAR = "#B59B00"
+
+
+class Ipucu:
+    """Bir bileşenin üzerine gelince açılan sarı bilgi penceresi (yönetmelik açıklamaları).
+
+    Bölümler: [(stil, metin)]; stil = baslik | govde | not | etiket | mevzuat
+    """
+
+    GECIKME_MS = 350
+    GENISLIK = 600
+
+    def __init__(self):
+        self.pencere = None
+        self.zamanlayici = None
+        self.pencere_sahibi = None
+        self._anahtar = None
+
+    def bagla(self, bilesen, bolum_fn):
+        """bolum_fn() -> bölüm listesi (üzerine gelindiğinde hesaplanır)."""
+        bilesen.bind("<Enter>", lambda e: self._planla(bilesen, bolum_fn, e.x_root, e.y_root), add="+")
+        bilesen.bind("<Leave>", lambda e: self.gizle(), add="+")
+        bilesen.bind("<ButtonPress>", lambda e: self.gizle(), add="+")
+
+    def bagla_agac(self, agac, bolum_fn):
+        """Treeview için: bolum_fn(x, y) -> (anahtar, bölüm listesi) | None; hücre/sütun değişince yenilenir."""
+        def hareket(e):
+            sonuc = bolum_fn(e.x, e.y)
+            anahtar = sonuc[0] if sonuc else None
+            if anahtar == self._anahtar:
+                return
+            self.gizle()
+            self._anahtar = anahtar
+            if sonuc:
+                self._planla(agac, lambda: sonuc[1], e.x_root, e.y_root, anahtar_koru=True)
+        agac.bind("<Motion>", hareket, add="+")
+        agac.bind("<Leave>", lambda e: self.gizle(), add="+")
+        agac.bind("<ButtonPress>", lambda e: self.gizle(), add="+")
+
+    def _planla(self, bilesen, bolum_fn, x, y, anahtar_koru=False):
+        self.gizle(anahtar_koru)
+        self.pencere_sahibi = bilesen
+        self.zamanlayici = bilesen.after(self.GECIKME_MS, lambda: self._goster(bilesen, bolum_fn, x, y))
+
+    def gizle(self, anahtar_koru=False):
+        if not anahtar_koru:
+            self._anahtar = None
+        if self.zamanlayici is not None:
+            try:
+                self.pencere_sahibi.after_cancel(self.zamanlayici)
+            except Exception:  # noqa: BLE001
+                pass
+            self.zamanlayici = None
+        if self.pencere is not None:
+            try:
+                self.pencere.destroy()
+            except Exception:  # noqa: BLE001
+                pass
+            self.pencere = None
+
+    def _goster(self, bilesen, bolum_fn, x, y):
+        self.zamanlayici = None
+        try:
+            bolumler = bolum_fn()
+        except Exception:  # noqa: BLE001
+            return
+        if not bolumler:
+            return
+        self.pencere_sahibi = bilesen
+        tw = tk.Toplevel(bilesen)
+        tw.wm_overrideredirect(True)
+        try:
+            tw.attributes("-topmost", True)
+        except tk.TclError:
+            pass
+        cerceve = tk.Frame(tw, background=SARI, highlightbackground=SARI_KENAR, highlightthickness=1, padx=9, pady=7)
+        cerceve.pack()
+        for stil, metin in bolumler:
+            ayar = dict(bg=SARI, fg="#222222", justify="left", anchor="w", wraplength=self.GENISLIK, font=("", 9))
+            if stil == "baslik":
+                ayar.update(font=("", 10, "bold"), fg="#000000")
+            elif stil == "not":
+                ayar.update(fg="#5A4A00", font=("", 8))
+            elif stil == "etiket":
+                ayar.update(fg="#7A5C00", font=("", 8, "bold"))
+            elif stil == "mevzuat":
+                ayar.update(fg="#1F3864", font=("", 9, "italic"))
+            tk.Label(cerceve, text=metin, **ayar).pack(fill="x", anchor="w", pady=(0, 3))
+        tw.update_idletasks()
+        w, h = tw.winfo_reqwidth(), tw.winfo_reqheight()
+        sw, sh = tw.winfo_screenwidth(), tw.winfo_screenheight()
+        px = min(x + 16, max(0, sw - w - 8))
+        py = y + 22 if y + 22 + h < sh - 8 else max(8, y - h - 12)
+        tw.wm_geometry(f"+{px}+{py}")
+        self.pencere = tw
+
+
+IPUCU = Ipucu()
+
+
 class KaydirmaCercevesi(ttk.Frame):
     def __init__(self, ana):
         super().__init__(ana)
@@ -159,7 +261,7 @@ class KaydirmaCercevesi(ttk.Frame):
 class SatirDialogu(tk.Toplevel):
     """Tablo satırı ekleme/düzenleme penceresi."""
 
-    def __init__(self, ana, kolonlar, degerler: dict):
+    def __init__(self, ana, kolonlar, degerler: dict, tablo: str | None = None):
         super().__init__(ana)
         self.title("Satır")
         self.transient(ana)
@@ -167,15 +269,22 @@ class SatirDialogu(tk.Toplevel):
         self.sonuc = None
         self.vars = {}
         for r, (anahtar, baslik, tur, secenek, _g) in enumerate(kolonlar):
-            ttk.Label(self, text=baslik).grid(row=r, column=0, sticky="w", padx=8, pady=3)
+            etiket = ttk.Label(self, text=baslik)
+            etiket.grid(row=r, column=0, sticky="w", padx=8, pady=3)
             v = tk.StringVar(value=str(degerler.get(anahtar, "")))
             if tur == "b":
                 v = tk.BooleanVar(value=_bool(degerler.get(anahtar, False)))
-                ttk.Checkbutton(self, variable=v).grid(row=r, column=1, sticky="w", padx=8)
+                giris = ttk.Checkbutton(self, variable=v)
+                giris.grid(row=r, column=1, sticky="w", padx=8)
             elif tur == "c":
-                ttk.Combobox(self, textvariable=v, values=secenek, state="readonly", width=44).grid(row=r, column=1, padx=8, pady=3)
+                giris = ttk.Combobox(self, textvariable=v, values=secenek, state="readonly", width=44)
+                giris.grid(row=r, column=1, padx=8, pady=3)
             else:
-                ttk.Entry(self, textvariable=v, width=46).grid(row=r, column=1, padx=8, pady=3)
+                giris = ttk.Entry(self, textvariable=v, width=46)
+                giris.grid(row=r, column=1, padx=8, pady=3)
+            if tablo:
+                for b in (etiket, giris):
+                    IPUCU.bagla(b, lambda k=anahtar: MEV.tablo_ipucu_bolumleri(tablo, k))
             self.vars[anahtar] = v
         alt = ttk.Frame(self)
         alt.grid(row=len(kolonlar), column=0, columnspan=2, pady=8)
@@ -190,9 +299,10 @@ class SatirDialogu(tk.Toplevel):
 
 
 class TabloDuzenleyici(ttk.Frame):
-    def __init__(self, ana, kolonlar, baslik, aciklama=""):
+    def __init__(self, ana, kolonlar, baslik, aciklama="", anahtar=None):
         super().__init__(ana)
         self.kolonlar = kolonlar
+        self.tablo_anahtar = anahtar
         ttk.Label(self, text=baslik, font=("", 10, "bold")).pack(anchor="w", pady=(8, 0))
         if aciklama:
             ttk.Label(self, text=aciklama, foreground="#555", wraplength=1100, justify="left").pack(anchor="w")
@@ -215,6 +325,19 @@ class TabloDuzenleyici(ttk.Frame):
         for metin, komut in (("Satır ekle", self.ekle), ("Düzenle (çift tık)", self.duzenle), ("Sil", self.sil), ("Kopyala", self.kopyala)):
             ttk.Button(dugmeler, text=metin, command=komut).pack(side="left", padx=3)
         self.agac.bind("<Double-1>", lambda e: self.duzenle())
+        if anahtar:
+            IPUCU.bagla_agac(self.agac, self._sutun_ipucu)
+
+    def _sutun_ipucu(self, x, y):
+        """Fare altındaki sütun için (anahtar, ipucu bölümleri)."""
+        if self.agac.identify_region(x, y) not in ("heading", "cell"):
+            return None
+        sutun = self.agac.identify_column(x)           # '#1', '#2' ...
+        try:
+            kolon = self.kolonlar[int(sutun[1:]) - 1][0]
+        except (ValueError, IndexError):
+            return None
+        return (self.tablo_anahtar, kolon), MEV.tablo_ipucu_bolumleri(self.tablo_anahtar, kolon)
 
     def _goster(self, d: dict):
         return [("✔" if (t == "b" and _bool(d.get(k))) else ("" if t == "b" else d.get(k, ""))) for k, _b, t, _s, _g in self.kolonlar]
@@ -241,7 +364,7 @@ class TabloDuzenleyici(ttk.Frame):
                 varsayilan[k] = s[0]
             elif t in ("f", "i"):
                 varsayilan[k] = 0
-        d = SatirDialogu(self.winfo_toplevel(), self.kolonlar, varsayilan)
+        d = SatirDialogu(self.winfo_toplevel(), self.kolonlar, varsayilan, self.tablo_anahtar)
         if d.sonuc is not None:
             self.agac.insert("", "end", values=self._goster(d.sonuc))
 
@@ -252,7 +375,7 @@ class TabloDuzenleyici(ttk.Frame):
         deger = {}
         for (k, _b, t, _s, _g), v in zip(self.kolonlar, self.agac.item(sec[0], "values")):
             deger[k] = (v == "✔") if t == "b" else v
-        d = SatirDialogu(self.winfo_toplevel(), self.kolonlar, deger)
+        d = SatirDialogu(self.winfo_toplevel(), self.kolonlar, deger, self.tablo_anahtar)
         if d.sonuc is not None:
             self.agac.item(sec[0], values=self._goster(d.sonuc))
 
@@ -319,23 +442,28 @@ class Uygulama(tk.Tk):
 
     # ---- sekmeler
     def _alan_olustur(self, ana, satir, ad, etiket, tur, secenek):
-        ttk.Label(ana, text=etiket).grid(row=satir, column=0, sticky="w", padx=6, pady=2)
+        lbl = ttk.Label(ana, text=etiket)
+        lbl.grid(row=satir, column=0, sticky="w", padx=6, pady=2)
         if tur == "b":
             v = tk.BooleanVar()
-            ttk.Checkbutton(ana, variable=v).grid(row=satir, column=1, sticky="w", padx=6)
+            giris = ttk.Checkbutton(ana, variable=v)
+            giris.grid(row=satir, column=1, sticky="w", padx=6)
         elif tur == "c":
             v = tk.StringVar()
-            cb = ttk.Combobox(ana, textvariable=v, values=list(secenek.values()), state="readonly", width=34)
-            cb.grid(row=satir, column=1, sticky="w", padx=6)
+            giris = ttk.Combobox(ana, textvariable=v, values=list(secenek.values()), state="readonly", width=34)
+            giris.grid(row=satir, column=1, sticky="w", padx=6)
         elif tur == "tesis":
             v = tk.StringVar()
             degerler = [f"{k} — {a} → {T.TEHLIKE_SINIFLARI[sn]}" for k, a, sn in T.EK1_TESISLER]
-            cb = ttk.Combobox(ana, textvariable=v, values=degerler, state="readonly", width=34)
-            cb.grid(row=satir, column=1, sticky="w", padx=6)
-            cb.bind("<<ComboboxSelected>>", lambda e, d=degerler: self._tesis_secildi(d.index(v.get())))
+            giris = ttk.Combobox(ana, textvariable=v, values=degerler, state="readonly", width=34)
+            giris.grid(row=satir, column=1, sticky="w", padx=6)
+            giris.bind("<<ComboboxSelected>>", lambda e, d=degerler: self._tesis_secildi(d.index(v.get())))
         else:
             v = tk.StringVar()
-            ttk.Entry(ana, textvariable=v, width=36 if tur == "t" else 14).grid(row=satir, column=1, sticky="w", padx=6)
+            giris = ttk.Entry(ana, textvariable=v, width=36 if tur == "t" else 14)
+            giris.grid(row=satir, column=1, sticky="w", padx=6)
+        for b in (lbl, giris):                    # etiketin veya kutunun üzerine gelince sarı mevzuat ipucu
+            IPUCU.bagla(b, lambda a=ad: MEV.ipucu_bolumleri(a))
         if not ad.startswith("@"):
             self.vars[ad] = v
 
@@ -361,25 +489,25 @@ class Uygulama(tk.Tk):
                   text="Önce 'Mahaller' tablosuna her katın mahallerini (alan, Ek-5/A türü) girin; ardından 'Kat kaçış verileri' tablosunda aynı kat adlarıyla çıkış bilgilerini girin. "
                        "Aynı anda kullanılmayan mahaller (tuvalet, soyunma, depo) için 'Sayılır' işaretini kaldırın (Madde 31(6)). Ek-5/A'da ilk satırlar net, diğerleri brüt alan esaslıdır."
                   ).pack(anchor="w", padx=6, pady=4)
-        self.t_mahal = TabloDuzenleyici(f, TABLOLAR["mahal"], "Mahaller (kullanıcı yükü)")
+        self.t_mahal = TabloDuzenleyici(f, TABLOLAR["mahal"], anahtar="mahal", baslik="Mahaller (kullanıcı yükü)")
         self.t_mahal.pack(fill="both", expand=True, padx=6)
-        self.t_kat = TabloDuzenleyici(f, TABLOLAR["kat"], "Kat kaçış verileri",
-                                      "Çıkış türü: kontrol edilecek eleman. Genişlik: o türdeki çıkışların toplam temiz genişliği. Mesafeler en uzak noktadan en yakın çıkışadır (Madde 32).")
+        self.t_kat = TabloDuzenleyici(f, TABLOLAR["kat"], anahtar="kat", baslik="Kat kaçış verileri",
+                                      aciklama="Çıkış türü: kontrol edilecek eleman. Genişlik: o türdeki çıkışların toplam temiz genişliği. Mesafeler en uzak noktadan en yakın çıkışadır (Madde 32).")
         self.t_kat.pack(fill="both", expand=True, padx=6)
 
     def _merdiven_sekmesi(self):
         f = ttk.Frame(self.defter)
         self.defter.add(f, text="Merdiven, kapı, duman, tank")
         self.f_merdiven = f
-        self.t_merdiven = TabloDuzenleyici(f, TABLOLAR["merdiven"], "Kaçış merdivenleri (Madde 38–46)")
+        self.t_merdiven = TabloDuzenleyici(f, TABLOLAR["merdiven"], anahtar="merdiven", baslik="Kaçış merdivenleri (Madde 38–46)")
         self.t_merdiven.pack(fill="both", expand=True, padx=6)
-        self.t_kapi = TabloDuzenleyici(f, TABLOLAR["kapi"], "Kaçış yolu kapıları (Madde 47)")
+        self.t_kapi = TabloDuzenleyici(f, TABLOLAR["kapi"], anahtar="kapi", baslik="Kaçış yolu kapıları (Madde 47)")
         self.t_kapi.pack(fill="both", expand=True, padx=6)
-        self.t_duman = TabloDuzenleyici(f, TABLOLAR["duman"], "Mekanik duman tahliyesi mahalleri (Madde 88(3))",
-                                        "Kazan dairesi, kapalı otopark, bodrum depo: alan 2000 m²'yi aşarsa mekanik duman tahliyesi, ≥10 hava değişimi/saat.")
+        self.t_duman = TabloDuzenleyici(f, TABLOLAR["duman"], anahtar="duman", baslik="Mekanik duman tahliyesi mahalleri (Madde 88(3))",
+                                        aciklama="Kazan dairesi, kapalı otopark, bodrum depo: alan 2000 m²'yi aşarsa mekanik duman tahliyesi, ≥10 hava değişimi/saat.")
         self.t_duman.pack(fill="both", expand=True, padx=6)
-        self.t_tank = TabloDuzenleyici(f, TABLOLAR["tank"], "Yanıcı/parlayıcı sıvı tankları ve kapları (Madde 113–122)",
-                                       "Tür: yerustu = açıkta yerüstü tank, yeralti = yeraltı tankı, depo_icinde = depo binası içinde.")
+        self.t_tank = TabloDuzenleyici(f, TABLOLAR["tank"], anahtar="tank", baslik="Yanıcı/parlayıcı sıvı tankları ve kapları (Madde 113–122)",
+                                       aciklama="Tür: yerustu = açıkta yerüstü tank, yeralti = yeraltı tankı, depo_icinde = depo binası içinde.")
         self.t_tank.pack(fill="both", expand=True, padx=6)
 
     def _sonuc_sekmesi(self):
@@ -414,6 +542,7 @@ class Uygulama(tk.Tk):
         cerceve.rowconfigure(0, weight=1)
         cerceve.columnconfigure(0, weight=1)
         self.sonuc_agaci.bind("<Double-1>", self._satir_detay)
+        IPUCU.bagla_agac(self.sonuc_agaci, self._sonuc_ipucu)
 
     # ---- veri aktarımı
     def yukle_girdi(self, g: Girdi):
@@ -506,6 +635,14 @@ class Uygulama(tk.Tk):
                 continue
             self.sonuc_agaci.insert("", "end", tags=(r.durum,), values=(
                 r.bolum, r.kalem, (rapor._fmt(r.deger) + (f" {r.birim}" if r.birim else "")).strip(), r.durum, r.madde, r.aciklama))
+
+    def _sonuc_ipucu(self, x, y):
+        """Sonuç satırının üzerine gelince dayanak madde metnini gösterir."""
+        iid = self.sonuc_agaci.identify_row(y)
+        if not iid or self.sonuc_agaci.identify_region(x, y) != "cell":
+            return None
+        v = self.sonuc_agaci.item(iid, "values")
+        return iid, MEV.sonuc_ipucu_bolumleri(v[1], v[4], v[5])
 
     def _satir_detay(self, _e):
         sec = self.sonuc_agaci.selection()
@@ -607,6 +744,7 @@ def kendini_sina() -> int:
     g2, uyari, _eksik = FORM.formdan_oku(FORM.doldurulmus_form(g))
     assert not uyari and len(H.hesapla(g2)) == len(s), "form gidiş-dönüş"
     assert len(FORM.sablon_olustur()) > 10000
+    assert any(st == "mevzuat" for st, _ in MEV.ipucu_bolumleri("kat_sayisi")), "mevzuat ipucu"
     app = Uygulama()
     app.yukle_girdi(g)
     app.hesapla()

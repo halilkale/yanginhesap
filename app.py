@@ -12,6 +12,7 @@ import streamlit as st
 
 from yangin import form as FORM
 from yangin import hesaplar as H
+from yangin import mevzuat as MEV
 from yangin import rapor
 from yangin import tablolar as T
 from yangin.modeller import (
@@ -168,24 +169,30 @@ def _key(ad: str) -> str:
     return "g_" + ad
 
 
+def _ipucu(ad, yardim=None):
+    """Alanın üzerine gelince/(?) simgesinde görünen yönetmelik açıklaması."""
+    metin_ = MEV.duz_metin(MEV.ipucu_bolumleri(ad))
+    return metin_ or yardim
+
+
 def metin(label, ad, **kw):
-    return st.text_input(label, key=_key(ad), **kw)
+    return st.text_input(label, key=_key(ad), help=_ipucu(ad), **kw)
 
 
 def sayi(label, ad, adim=1.0, minimum=0.0, yardim=None, format="%.2f"):
-    return st.number_input(label, min_value=minimum, step=adim, key=_key(ad), help=yardim, format=format)
+    return st.number_input(label, min_value=minimum, step=adim, key=_key(ad), help=_ipucu(ad, yardim), format=format)
 
 
 def tam(label, ad, minimum=0, yardim=None):
-    return st.number_input(label, min_value=minimum, step=1, key=_key(ad), help=yardim)
+    return st.number_input(label, min_value=minimum, step=1, key=_key(ad), help=_ipucu(ad, yardim))
 
 
 def evet(label, ad, yardim=None):
-    return st.checkbox(label, key=_key(ad), help=yardim)
+    return st.checkbox(label, key=_key(ad), help=_ipucu(ad, yardim))
 
 
 def sec(label, ad, secenekler: dict, yardim=None):
-    return st.selectbox(label, list(secenekler), key=_key(ad), format_func=lambda k: secenekler[k], help=yardim)
+    return st.selectbox(label, list(secenekler), key=_key(ad), format_func=lambda k: secenekler[k], help=_ipucu(ad, yardim))
 
 
 def tablo(ad_state, kolonlar, baslik, yardim=None):
