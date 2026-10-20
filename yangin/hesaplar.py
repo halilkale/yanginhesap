@@ -398,10 +398,19 @@ def merdiven_kapi(g: Girdi) -> list[Sonuc]:
     for k in g.kapilar:
         K = f"{B} — Kapı {k.ad}"
         if k.temiz_genislik_cm:
-            hi = 120 if k.kanat_sayisi == 1 else 1e9
-            ok = k.temiz_genislik_cm >= 80 and k.temiz_genislik_cm <= hi
-            s.append(Sonuc(K, "Temiz genişlik", k.temiz_genislik_cm, "cm", UYGUN if ok else UYGUN_DEGIL, "Madde 33(5), 47(1),(4)",
-                           "Tek kanatlı çıkış kapısında 80–120 cm; kaçış yolu kapıları en az 80 cm."))
+            tek = k.kanat_sayisi <= 1                      # kanat sayısı girilmemişse tek kanatlı kabul edilir
+            hi = 120 if tek else 1e9
+            w = k.temiz_genislik_cm
+            ok = 80 <= w <= hi
+            if ok:
+                ack = ("Tek kanatlı kapı: 80–120 cm aralığında." if tek else "İki/çok kanatlı kapı: en az 80 cm, üst sınır yok.")
+            elif w < 80:
+                ack = "Kaçış yolu kapıları en az 80 cm temiz genişlikte olmalıdır (Madde 33(5), 47(1))."
+            else:
+                ack = (f"Tek kanatlı çıkış kapısının temiz genişliği en çok 120 cm olabilir (Madde 33(5)b, 47(4)); {w:g} cm için kapıyı iki kanatlı yapın "
+                       "(Kapı tablosunda 'Kanat' = 2) veya genişliği 120 cm'ye indirin.")
+            s.append(Sonuc(K, "Temiz genişlik", w, "cm", UYGUN if ok else UYGUN_DEGIL, "Madde 33(5), 47(1),(4)",
+                           f"Kanat sayısı: {k.kanat_sayisi if k.kanat_sayisi else 'girilmedi (tek kanatlı kabul edildi)'}. " + ack))
         if k.yukseklik_cm:
             s.append(Sonuc(K, "Yükseklik", k.yukseklik_cm, "cm", _karsilastir(k.yukseklik_cm, 200, ust=False), "Madde 47(1)", "En az 200 cm; eşik olmamalı."))
         if k.esik_var:

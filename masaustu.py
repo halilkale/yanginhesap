@@ -11,6 +11,7 @@ import sys
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 
+from yangin import dokum as DOKUM
 from yangin import form as FORM
 from yangin import hesaplar as H
 from yangin import mevzuat as MEV
@@ -234,6 +235,212 @@ class Ipucu:
 IPUCU = Ipucu()
 
 
+def _norm(metin: str) -> str:
+    """Türkçe harf/büyük-küçük farkını yok sayan arama biçimi (ör. 'İPEK' ~ 'ipek' ~ 'IPEK')."""
+    t = metin.replace("İ", "i").replace("I", "ı").lower()
+    return t.translate(str.maketrans("ıçğöşü", "icgosu"))
+
+
+class FiltreliSecim(ttk.Frame):
+    """Yazdıkça süzülen açılır liste: girilen her sözcüğü içeren seçenekler gösterilir.
+
+    Liste penceresi geniştir (uzun seçenekler okunabilir); seçilen metnin tamamı altında ayrıca yazılır.
+    Klavye: ↑/↓ gezinir, Enter seçer, Esc kapatır.
+    """
+
+    def __init__(self, ana, degerler, degisken: tk.StringVar, genislik=34, komut=None):
+        super().__init__(ana)
+        self.degerler = list(degerler)
+        self.degisken = degisken
+        self.komut = komut
+        self.pencere = None
+        self.liste = None
+        self.uygun: list[str] = []
+        self._son_gecerli = degisken.get() if degisken.get() in self.degerler else ""
+        self.giris = ttk.Entry(self, textvariable=degisken, width=genislik)
+        self.giris.grid(row=0, column=0, sticky="ew")
+        self.dugme = ttk.Button(self, text="▼", width=3, command=self._tumunu_ac)
+        self.dugme.grid(row=0, column=1, padx=(2, 0))
+        self.tam_metin = ttk.Label(self, text="", wraplength=520, justify="left", foreground="#1F3864")
+        self.tam_metin.grid(row=1, column=0, columnspan=2, sticky="w")
+        self.columnconfigure(0, weight=1)
+        self.giris.bind("<KeyRelease>", self._yazildi)
+        self.giris.bind("<Down>", lambda e: self._gezin(1))
+        self.giris.bind("<Up>", lambda e: self._gezin(-1))
+        self.giris.bind("<Return>", self._enter)
+        self.giris.bind("<Escape>", lambda e: self._kapat())
+        self.giris.bind("<FocusOut>", lambda e: self.after(180, self._odak_kontrol))
+        self.giris.bind("<Button-1>", lambda e: self.after(10, self._tikla_ac))
+        self.degisken.trace_add("write", lambda *_: self._etiketi_yenile())
+        self._etiketi_yenile()
+
+    # -- yardımcılar
+    def _etiketi_yenile(self):
+        v = self.degisken.get()
+        self.tam_metin.config(text=("Seçilen: " + v) if v in self.degerler else "")
+        if v in self.degerler:
+            self._son_gecerli = v
+
+    def sec(self, deger: str):
+        self.degisken.set(deger)
+        self._son_gecerli = deger
+        self._kapat()
+
+    def _filtrele(self, metin: str) -> list[str]:
+        sozcukler = [w for w in _norm(metin).split() if w]
+        if not sozcukler:
+            return list(self.degerler)
+        return [d for d in self.degerler if all(w in _norm(d) for w in sozcukler)]
+
+    def _yazildi(self, e):
+        if e.keysym in ("Down", "Up", "Return", "Escape", "Tab", "Shift_L", "Shift_R", "Left", "Right"):
+            return
+        self._ac(self._filtrele(self.degisken.get()))
+
+    def _tumunu_ac(self):
+        self._ac(list(self.degerler))
+        self.giris.focus_set()
+
+    def _tikla_ac(self):
+        if self.pencere is None and self.degisken.get() in ("", None):
+            self._ac(list(self.degerler))
+
+    # -- açılır pencere
+    def _ac(self, uygun: list[str]):
+        self.uygun = uygun
+        if self.pencere is None:
+            tw = tk.Toplevel(self)
+            tw.wm_overrideredirect(True)
+            try:
+                tw.attributes("-topmost", True)
+            except tk.TclError:
+                pass
+            cerceve = tk.Frame(tw, background="#808080", padx=1, pady=1)
+            cerceve.pack()
+            self.liste = tk.Listbox(cerceve, activestyle="none", exportselection=False, font=("", 9))
+            kay = ttk.Scrollbar(cerceve, orient="vertical", command=self.liste.yview)
+            yat = ttk.Scrollbar(cerceve, orient="horizontal", command=self.liste.xview)
+            self.liste.configure(yscrollcommand=kay.set, xscrollcommand=yat.set)
+            self.liste.grid(row=0, column=0)
+            kay.grid(row=0, column=1, sticky="ns")
+            yat.grid(row=1, column=0, sticky="ew")
+            self.liste.bind("<ButtonRelease-1>", self._liste_tikla)
+            self.liste.bind("<Return>", self._enter)
+            self.liste.bind("<Escape>", lambda e: self._kapat())
+            self.pencere = tw
+        self.liste.delete(0, "end")
+        if uygun:
+            for d in uygun:
+                self.liste.insert("end", d)
+            en_uzun = max(len(d) for d in uygun)
+            self.liste.configure(width=min(max(en_uzun, 40), 150), height=min(len(uygun), 14))
+            self.liste.selection_set(0)
+            self.liste.activate(0)
+        else:
+            self.liste.insert("end", "(eşleşen seçenek yok — farklı sözcük deneyin)")
+            self.liste.configure(width=46, height=1)
+        self.pencere.update_idletasks()
+        w, h = self.pencere.winfo_reqwidth(), self.pencere.winfo_reqheight()
+        x = self.giris.winfo_rootx()
+        y = self.giris.winfo_rooty() + self.giris.winfo_height() + 2
+        sw, sh = self.winfo_screenwidth(), self.winfo_screenheight()
+        x = max(0, min(x, sw - w - 6))
+        if y + h > sh - 40:
+            y = max(0, self.giris.winfo_rooty() - h - 2)
+        self.pencere.wm_geometry(f"+{x}+{y}")
+
+    def _kapat(self):
+        if self.pencere is not None:
+            try:
+                self.pencere.destroy()
+            except Exception:  # noqa: BLE001
+                pass
+            self.pencere = None
+            self.liste = None
+
+    def _gezin(self, yon: int):
+        if self.pencere is None:
+            self._ac(self._filtrele(self.degisken.get()))
+            return "break"
+        if not self.uygun:
+            return "break"
+        sec = self.liste.curselection()
+        i = (sec[0] if sec else -1) + yon
+        i = max(0, min(len(self.uygun) - 1, i))
+        self.liste.selection_clear(0, "end")
+        self.liste.selection_set(i)
+        self.liste.activate(i)
+        self.liste.see(i)
+        return "break"
+
+    def _enter(self, _e=None):
+        if self.pencere is not None and self.uygun and self.liste is not None:
+            sec = self.liste.curselection()
+            self._sec_indeks(sec[0] if sec else 0)
+        return "break"
+
+    def _liste_tikla(self, e):
+        i = self.liste.nearest(e.y)
+        if 0 <= i < len(self.uygun):
+            self._sec_indeks(i)
+
+    def _sec_indeks(self, i: int):
+        deger = self.uygun[i]
+        self.sec(deger)
+        if self.komut:
+            self.komut(self.degerler.index(deger))
+
+    def _odak_kontrol(self):
+        # liste penceresine tıklanırken odak kaybı sayılmaz
+        try:
+            odak = self.focus_get()
+        except Exception:  # noqa: BLE001
+            odak = None
+        if odak is not None and (odak is self.liste or odak is self.giris):
+            return
+        self._kapat()
+        if self.degisken.get() not in self.degerler:          # yarım yazılmış metin: son geçerli seçime dön
+            self.degisken.set(self._son_gecerli)
+
+
+class UyariPenceresi(tk.Toplevel):
+    """Eksik bilgi uyarısı: 'Geri dön' / 'Yine de devam et'. devam: True/False."""
+
+    def __init__(self, ana, baslik: str, ust_metin: str, maddeler: list[str], devam_metni="Yine de devam et"):
+        super().__init__(ana)
+        self.title(baslik)
+        self.transient(ana)
+        self.grab_set()
+        self.devam = False
+        self.resizable(False, False)
+        ttk.Label(self, text="⚠ " + ust_metin, font=("", 10, "bold"), wraplength=560, justify="left").pack(anchor="w", padx=12, pady=(12, 4))
+        cerceve = ttk.Frame(self)
+        cerceve.pack(fill="both", expand=True, padx=12)
+        kutu = tk.Listbox(cerceve, width=84, height=min(max(len(maddeler), 3), 14), activestyle="none", bg="#FFF7A8", relief="flat", font=("", 9))
+        kay = ttk.Scrollbar(cerceve, orient="vertical", command=kutu.yview)
+        kutu.configure(yscrollcommand=kay.set)
+        for m in maddeler:
+            kutu.insert("end", "•  " + m)
+        kutu.pack(side="left", fill="both", expand=True)
+        kay.pack(side="right", fill="y")
+        alt = ttk.Frame(self)
+        alt.pack(pady=12)
+        geri = ttk.Button(alt, text="Geri dön ve doldur", command=self.destroy)
+        geri.pack(side="left", padx=6)
+        ttk.Button(alt, text=devam_metni, command=self._devam).pack(side="left", padx=6)
+        geri.focus_set()
+        self.bind("<Escape>", lambda e: self.destroy())
+        self.update_idletasks()
+        x = ana.winfo_rootx() + max(0, (ana.winfo_width() - self.winfo_reqwidth()) // 2)
+        y = ana.winfo_rooty() + max(0, (ana.winfo_height() - self.winfo_reqheight()) // 3)
+        self.geometry(f"+{x}+{y}")
+        self.wait_window()
+
+    def _devam(self):
+        self.devam = True
+        self.destroy()
+
+
 class KaydirmaCercevesi(ttk.Frame):
     def __init__(self, ana):
         super().__init__(ana)
@@ -276,6 +483,9 @@ class SatirDialogu(tk.Toplevel):
                 v = tk.BooleanVar(value=_bool(degerler.get(anahtar, False)))
                 giris = ttk.Checkbutton(self, variable=v)
                 giris.grid(row=r, column=1, sticky="w", padx=8)
+            elif tur == "c" and len(secenek) > 8:
+                giris = FiltreliSecim(self, secenek, v, genislik=46)
+                giris.grid(row=r, column=1, padx=8, pady=3, sticky="w")
             elif tur == "c":
                 giris = ttk.Combobox(self, textvariable=v, values=secenek, state="readonly", width=44)
                 giris.grid(row=r, column=1, padx=8, pady=3)
@@ -283,7 +493,7 @@ class SatirDialogu(tk.Toplevel):
                 giris = ttk.Entry(self, textvariable=v, width=46)
                 giris.grid(row=r, column=1, padx=8, pady=3)
             if tablo:
-                for b in (etiket, giris):
+                for b in (etiket, giris, getattr(giris, "giris", giris)):
                     IPUCU.bagla(b, lambda k=anahtar: MEV.tablo_ipucu_bolumleri(tablo, k))
             self.vars[anahtar] = v
         alt = ttk.Frame(self)
@@ -299,10 +509,15 @@ class SatirDialogu(tk.Toplevel):
 
 
 class TabloDuzenleyici(ttk.Frame):
-    def __init__(self, ana, kolonlar, baslik, aciklama="", anahtar=None):
+    # yeni satırda varsayılan değerler: (tablo, sütun) -> değer
+    VARSAYILAN = {("kapi", "kanat"): 1, ("kapi", "yone"): True, ("mahal", "sayilir"): True, ("kat", "cikis"): 2, ("merdiven", "kat"): 1,
+                  ("duman", "yuk"): 3, ("merdiven", "sbasamak"): 0}
+
+    def __init__(self, ana, kolonlar, baslik, aciklama="", anahtar=None, degisti=None):
         super().__init__(ana)
         self.kolonlar = kolonlar
         self.tablo_anahtar = anahtar
+        self.degisti = degisti
         ttk.Label(self, text=baslik, font=("", 10, "bold")).pack(anchor="w", pady=(8, 0))
         if aciklama:
             ttk.Label(self, text=aciklama, foreground="#555", wraplength=1100, justify="left").pack(anchor="w")
@@ -357,6 +572,13 @@ class TabloDuzenleyici(ttk.Frame):
         for d in satirlar:
             self.agac.insert("", "end", values=self._goster(d))
 
+    def _degisti(self):
+        if self.degisti:
+            self.degisti()
+
+    def satir_ekle(self, d: dict):
+        self.agac.insert("", "end", values=self._goster(d))
+
     def ekle(self):
         varsayilan = {k: ("" if t not in ("b",) else False) for k, _b, t, _s, _g in self.kolonlar}
         for k, _b, t, s, _g in self.kolonlar:
@@ -364,9 +586,12 @@ class TabloDuzenleyici(ttk.Frame):
                 varsayilan[k] = s[0]
             elif t in ("f", "i"):
                 varsayilan[k] = 0
+            if (self.tablo_anahtar, k) in self.VARSAYILAN:
+                varsayilan[k] = self.VARSAYILAN[(self.tablo_anahtar, k)]
         d = SatirDialogu(self.winfo_toplevel(), self.kolonlar, varsayilan, self.tablo_anahtar)
         if d.sonuc is not None:
             self.agac.insert("", "end", values=self._goster(d.sonuc))
+            self._degisti()
 
     def duzenle(self):
         sec = self.agac.selection()
@@ -378,14 +603,17 @@ class TabloDuzenleyici(ttk.Frame):
         d = SatirDialogu(self.winfo_toplevel(), self.kolonlar, deger, self.tablo_anahtar)
         if d.sonuc is not None:
             self.agac.item(sec[0], values=self._goster(d.sonuc))
+            self._degisti()
 
     def sil(self):
         for iid in self.agac.selection():
             self.agac.delete(iid)
+        self._degisti()
 
     def kopyala(self):
         for iid in self.agac.selection():
             self.agac.insert("", "end", values=self.agac.item(iid, "values"))
+        self._degisti()
 
 
 # --------------------------------------------------------------------------
@@ -400,6 +628,10 @@ class Uygulama(tk.Tk):
         self.vars: dict[str, tk.Variable] = {}
         self.sonuclar = []
         self.g_son: Girdi | None = None
+        self.tehlike_belirlendi = False      # kullanıcı tehlike sınıfını seçti / proje yüklendi
+        self._sessiz = False                 # programatik sekme geçişlerinde uyarı verme
+        self._onceki_sekme = None
+        self._gecildi: dict[str, frozenset] = {}
         self._stil()
         self._ust_cubuk()
         self.defter = ttk.Notebook(self)
@@ -408,9 +640,13 @@ class Uygulama(tk.Tk):
         self._kacis_sekmesi()
         self._merdiven_sekmesi()
         self._sonuc_sekmesi()
+        self._dokum_sekmesi()
         self.defter.insert(1, self.f_kacis)       # Genel → Kullanıcı yükü → Merdiven → Su ... sırası
         self.defter.insert(2, self.f_merdiven)
         self.yukle_girdi(Girdi(tarih=dt.date.today().strftime("%d.%m.%Y")))
+        self.tehlike_belirlendi = False
+        self._onceki_sekme = self.defter.select()
+        self.defter.bind("<<NotebookTabChanged>>", self._sekme_degisti)
         self.durum = ttk.Label(self, text="Hazır. Sekmeleri doldurup 'Hesapla' düğmesine basın.", anchor="w", relief="sunken")
         self.durum.pack(fill="x", side="bottom")
 
@@ -427,7 +663,7 @@ class Uygulama(tk.Tk):
     def _ust_cubuk(self):
         cubuk = ttk.Frame(self)
         cubuk.pack(fill="x", padx=6, pady=6)
-        ttk.Button(cubuk, text="▶ Hesapla", style="Hesapla.TButton", command=self.hesapla).pack(side="left", padx=2)
+        ttk.Button(cubuk, text="▶ Hesapla", style="Hesapla.TButton", command=lambda: self.hesapla(sor=True)).pack(side="left", padx=2)
         ttk.Button(cubuk, text="Excel raporu", command=lambda: self.rapor_kaydet("xlsx")).pack(side="left", padx=2)
         ttk.Button(cubuk, text="Word raporu", command=lambda: self.rapor_kaydet("docx")).pack(side="left", padx=2)
         ttk.Separator(cubuk, orient="vertical").pack(side="left", fill="y", padx=8)
@@ -438,7 +674,12 @@ class Uygulama(tk.Tk):
         ttk.Button(cubuk, text="Formu içe aktar", command=self.form_ice_aktar).pack(side="left", padx=2)
         ttk.Separator(cubuk, orient="vertical").pack(side="left", fill="y", padx=8)
         ttk.Button(cubuk, text="Örnek fabrika", command=lambda: self.yukle_girdi(ornek_fabrika())).pack(side="left", padx=2)
-        ttk.Button(cubuk, text="Sıfırla", command=lambda: self.yukle_girdi(Girdi(tarih=dt.date.today().strftime("%d.%m.%Y")))).pack(side="left", padx=2)
+        ttk.Button(cubuk, text="Sıfırla", command=self.sifirla).pack(side="left", padx=2)
+
+    def sifirla(self):
+        self.yukle_girdi(Girdi(tarih=dt.date.today().strftime("%d.%m.%Y")))
+        self.tehlike_belirlendi = False
+        self._gecildi.clear()
 
     # ---- sekmeler
     def _alan_olustur(self, ana, satir, ad, etiket, tur, secenek):
@@ -455,14 +696,16 @@ class Uygulama(tk.Tk):
         elif tur == "tesis":
             v = tk.StringVar()
             degerler = [f"{k} — {a} → {T.TEHLIKE_SINIFLARI[sn]}" for k, a, sn in T.EK1_TESISLER]
-            giris = ttk.Combobox(ana, textvariable=v, values=degerler, state="readonly", width=34)
+            giris = FiltreliSecim(ana, degerler, v, genislik=40, komut=self._tesis_secildi)
             giris.grid(row=satir, column=1, sticky="w", padx=6)
-            giris.bind("<<ComboboxSelected>>", lambda e, d=degerler: self._tesis_secildi(d.index(v.get())))
+            self.tesis_secim = giris
         else:
             v = tk.StringVar()
             giris = ttk.Entry(ana, textvariable=v, width=36 if tur == "t" else 14)
             giris.grid(row=satir, column=1, sticky="w", padx=6)
-        for b in (lbl, giris):                    # etiketin veya kutunun üzerine gelince sarı mevzuat ipucu
+        if ad == "tehlike":
+            giris.bind("<<ComboboxSelected>>", lambda e: setattr(self, "tehlike_belirlendi", True), add="+")
+        for b in (lbl, giris, getattr(giris, "giris", giris)):          # etiketin veya kutunun üzerine gelince sarı mevzuat ipucu
             IPUCU.bagla(b, lambda a=ad: MEV.ipucu_bolumleri(a))
         if not ad.startswith("@"):
             self.vars[ad] = v
@@ -470,6 +713,7 @@ class Uygulama(tk.Tk):
     def _tesis_secildi(self, indeks: int):
         kod = T.EK1_TESISLER[indeks][2]
         self.vars["tehlike"].set(T.TEHLIKE_SINIFLARI[kod])
+        self.tehlike_belirlendi = True
 
     def _genel_sekmeler(self):
         for baslik, bolumler in SEKMELER:
@@ -489,7 +733,7 @@ class Uygulama(tk.Tk):
                   text="Önce 'Mahaller' tablosuna her katın mahallerini (alan, Ek-5/A türü) girin; ardından 'Kat kaçış verileri' tablosunda aynı kat adlarıyla çıkış bilgilerini girin. "
                        "Aynı anda kullanılmayan mahaller (tuvalet, soyunma, depo) için 'Sayılır' işaretini kaldırın (Madde 31(6)). Ek-5/A'da ilk satırlar net, diğerleri brüt alan esaslıdır."
                   ).pack(anchor="w", padx=6, pady=4)
-        self.t_mahal = TabloDuzenleyici(f, TABLOLAR["mahal"], anahtar="mahal", baslik="Mahaller (kullanıcı yükü)")
+        self.t_mahal = TabloDuzenleyici(f, TABLOLAR["mahal"], anahtar="mahal", degisti=self.kat_senkron, baslik="Mahaller (kullanıcı yükü)")
         self.t_mahal.pack(fill="both", expand=True, padx=6)
         self.t_kat = TabloDuzenleyici(f, TABLOLAR["kat"], anahtar="kat", baslik="Kat kaçış verileri",
                                       aciklama="Çıkış türü: kontrol edilecek eleman. Genişlik: o türdeki çıkışların toplam temiz genişliği. Mesafeler en uzak noktadan en yakın çıkışadır (Madde 32).")
@@ -569,6 +813,10 @@ class Uygulama(tk.Tk):
                              "yone": k.kacis_yonune_aciliyor, "esik": k.esik_var, "kuvvet": k.acma_kuvveti_N} for k in g.kapilar])
         self.t_duman.doldur([{"ad": m.ad, "tur": m.tur, "alan": m.alan_m2, "yuk": m.yukseklik_m} for m in g.duman_mahalleri])
         self.t_tank.doldur([{"ad": t.ad, "sinif": t.sinif, "hacim": t.hacim_L, "tur": t.tur} for t in g.sivi_tanklar])
+        self.tehlike_belirlendi = True           # yüklenen projede tehlike sınıfı belirlenmiştir
+        self._gecildi.clear()
+        if hasattr(self, "tesis_secim"):
+            self.tesis_secim.degisken.set("")
 
     @staticmethod
     def _secenek(ad: str) -> dict:
@@ -608,22 +856,222 @@ class Uygulama(tk.Tk):
         return tablolari_uygula(g, self.t_mahal.satirlar(), self.t_kat.satirlar(), self.t_merdiven.satirlar(),
                                 self.t_kapi.satirlar(), self.t_duman.satirlar(), self.t_tank.satirlar())
 
+    # ---- zorunlu alan denetimi, otomatik kat ekleme
+    SEKME_ALANLARI = {
+        "Genel": [("yapi_yuksekligi", "Yapı yüksekliği (m)"), ("bina_yuksekligi", "Bina yüksekliği (m)"), ("kat_sayisi", "Zemin üstü kat sayısı"),
+                  ("taban_alani", "Bina taban alanı (m²)"), ("toplam_kapali_alan", "Toplam kapalı alan (m²)"), ("en_buyuk_kat_alani", "En büyük kat alanı (m²)"),
+                  ("bina_boyu", "Bina boyu (m)"), ("bina_eni", "Bina eni (m)"), ("cephe_genisligi", "Cephe genişliği (m)")],
+    }
+
+    def zorunlu_eksikler(self, sekme: str, g: Girdi | None = None) -> list[str]:
+        """Bir sekmede, hesabın yapılabilmesi/kontrol edilebilmesi için doldurulması gereken ama boş bırakılan alanlar."""
+        g = g or self.topla_girdi()
+        e: list[str] = []
+        if sekme == "Genel":
+            tesis_ok = hasattr(self, "tesis_secim") and self.tesis_secim.degisken.get() in self.tesis_secim.degerler
+            if not (self.tehlike_belirlendi or tesis_ok):
+                e.append("Üretim/tesis türü seçilmedi (tehlike sınıfı buna göre belirlenir; ya da tehlike sınıfını elle seçin)")
+            for alan, ad in self.SEKME_ALANLARI["Genel"]:
+                if getattr(g, alan) <= 0:
+                    e.append(f"{ad} girilmedi")
+        elif sekme == "Kullanıcı yükü ve kaçış":
+            if not g.katlar or not any(m.alan > 0 for k in g.katlar for m in k.mahaller):
+                e.append("Mahaller tablosuna en az bir mahal (alanıyla) girilmedi — kullanıcı yükü hesaplanamaz")
+            for k in g.katlar:
+                for m in k.mahaller:
+                    if m.alan <= 0:
+                        e.append(f"'{k.ad}' katı, '{m.ad}' mahalinin alanı girilmedi")
+                if not k.mahaller:
+                    e.append(f"'{k.ad}' katı için mahal girilmedi")
+                if k.cikis_sayisi <= 0:
+                    e.append(f"'{k.ad}': çıkış sayısı girilmedi")
+                if k.mevcut_genislik_cm <= 0:
+                    e.append(f"'{k.ad}': mevcut toplam çıkış genişliği girilmedi")
+                if k.en_uzak_mesafe_m <= 0:
+                    e.append(f"'{k.ad}': en uzak kaçış mesafesi girilmedi")
+        elif sekme == "Merdiven, kapı, duman, tank":
+            if (g.kat_sayisi > 1 or g.bodrum_kat_sayisi > 0) and not g.merdivenler:
+                e.append("Çok katlı binada en az bir kaçış merdiveni girilmedi")
+            for m in g.merdivenler:
+                if m.genislik_cm <= 0:
+                    e.append(f"Merdiven '{m.ad}': genişlik girilmedi")
+        elif sekme == "Su ve söndürme":
+            if g.yagmurlama_var and g.spr_yukseklik_h <= 0:
+                e.append("Sprinkler var: en alt-en üst başlık arası yükseklik h girilmedi (Ek-8/A)")
+            if g.dolap_var and g.es_zamanli_dolap <= 0:
+                e.append("Yangın dolabı var: eş zamanlı çalışan dolap sayısı girilmedi")
+        elif sekme == "Algılama, duman, aydınlatma":
+            if g.kacis_yolu_uzunlugu_m <= 0:
+                e.append("En uzun kaçış yolu uzunluğu girilmedi (yönlendirme işareti adedi için)")
+        elif sekme == "Kazan ve tehlikeli madde":
+            if g.kazan_var:
+                if g.kazan_kw <= 0:
+                    e.append("Kazan dairesi var: ısıl kapasite (kW) girilmedi")
+                if g.kazan_alani_m2 <= 0:
+                    e.append("Kazan dairesi var: döşeme alanı girilmedi")
+        elif sekme == "Çevre ve ekipler":
+            if g.itfaiye_son_nokta_mesafe_m <= 0:
+                e.append("İtfaiye aracının son yaklaşma noktasından cepheye mesafe girilmedi (Madde 22)")
+            if g.ic_yol_genislik_m <= 0:
+                e.append("İç ulaşım yolu genişliği girilmedi (Madde 22)")
+        return e
+
+    def _sekme_degisti(self, _e=None):
+        simdiki = self.defter.select()
+        onceki = self._onceki_sekme
+        if self._sessiz or onceki is None or onceki == simdiki:
+            self._onceki_sekme = simdiki
+            return
+        try:
+            ad = self.defter.tab(onceki, "text")
+            eksik = self.zorunlu_eksikler(ad)
+        except Exception:  # noqa: BLE001
+            self._onceki_sekme = simdiki
+            return
+        if eksik and self._gecildi.get(ad) != frozenset(eksik):
+            devam = UyariPenceresi(self, "Eksik bilgi",
+                                   f"'{ad}' sekmesinde hesap için gerekli {len(eksik)} bilgi eksik. Doldurmadan devam edilsin mi?", eksik).devam
+            if not devam:
+                self._sessiz = True
+                try:
+                    self.defter.select(onceki)
+                finally:
+                    self._sessiz = False
+                return
+            self._gecildi[ad] = frozenset(eksik)
+        self._onceki_sekme = simdiki
+
+    def sekme_sec(self, sekme_widget):
+        """Uyarı vermeden sekme değiştirir."""
+        self._sessiz = True
+        try:
+            self.defter.select(sekme_widget)
+        finally:
+            self._sessiz = False
+        self._onceki_sekme = self.defter.select()
+
+    def kat_senkron(self):
+        """Mahaller tablosuna eklenen kat, 'Kat kaçış verileri' tablosunda yoksa otomatik eklenir (ve kat sayıları güncellenir)."""
+        mevcut = {str(r["kat"]).strip() for r in self.t_kat.satirlar()}
+        eklenen = []
+        for r in self.t_mahal.satirlar():
+            ad = str(r["kat"] or "").strip()
+            if ad and ad not in mevcut:
+                zemin = "zemin" in ad.lower()
+                self.t_kat.satir_ekle({"kat": ad, "cikis": 2, "tur": CIKIS_TURLERI["dis_kapi" if zemin else "merdiven"], "genislik": 0, "tekil": 0,
+                                       "yon": YONLER["iki"], "mesafe": 0, "kus": 0, "cikmaz": 0, "diyagonal": 0, "arasi": 0})
+                mevcut.add(ad)
+                eklenen.append(ad)
+        adlar = {str(r["kat"]).strip() for r in self.t_kat.satirlar() if str(r["kat"]).strip()}
+        bodrum = sum(1 for a in adlar if "bodrum" in a.lower())
+        ust = len(adlar) - bodrum
+        notlar = []
+        try:
+            if ust > _i(self.vars["kat_sayisi"].get(), 0):
+                self.vars["kat_sayisi"].set(str(ust))
+                notlar.append(f"zemin üstü kat sayısı {ust} yapıldı")
+            if bodrum > _i(self.vars["bodrum_kat_sayisi"].get(), 0):
+                self.vars["bodrum_kat_sayisi"].set(str(bodrum))
+                notlar.append(f"bodrum kat sayısı {bodrum} yapıldı")
+        except KeyError:
+            pass
+        if eklenen or notlar:
+            self.durum.config(text="Otomatik: " + (f"{', '.join(repr(a) for a in eklenen)} katı 'Kat kaçış verileri' tablosuna eklendi" if eklenen else "")
+                              + ("; " if eklenen and notlar else "") + "; ".join(notlar) + ". Çıkış bilgilerini girmeyi unutmayın.")
+
     # ---- işlemler
-    def hesapla(self):
+    def hesapla(self, sor: bool = False):
+        """sor=True: eksik zorunlu bilgi varsa kullanıcıya sorar ('Yine de devam et' ile sürer). Hesaplandıysa True döner."""
         try:
             g = self.topla_girdi()
-            self.sonuclar = H.hesapla(g)
-            self.g_son = g
         except Exception as e:  # noqa: BLE001
             messagebox.showerror("Hesaplama hatası", f"{type(e).__name__}: {e}")
-            return
+            return False
+        if sor:
+            hepsi = []
+            for i in range(self.defter.index("end")):
+                ad = self.defter.tab(i, "text")
+                hepsi.extend(f"{ad}: {m}" for m in self.zorunlu_eksikler(ad, g))
+            if hepsi and not UyariPenceresi(self, "Eksik bilgi", f"Hesap için gerekli {len(hepsi)} bilgi eksik. Yine de hesaplansın mı?", hepsi,
+                                            devam_metni="Yine de hesapla").devam:
+                return False
+        try:
+            self.sonuclar = H.hesapla(g)
+            self.g_son = g
+            self.dokum_goster(DOKUM.hesap_dokumu(g))
+        except Exception as e:  # noqa: BLE001
+            messagebox.showerror("Hesaplama hatası", f"{type(e).__name__}: {e}")
+            return False
         oz = H.ozet(self.sonuclar)
         parcalar = [f"{ad}: {oz.get(k, 0)}" for ad, k in (("Uygun", UYGUN), ("Uygun değil", UYGUN_DEGIL), ("Gerekli önlem", GEREKLI),
                                                            ("Koşullu", KOSULLU), ("Veri girilmedi", KONTROL), ("Gerekmez", GEREKMEZ))]
         self.ozet_etiket.config(text="   |   ".join(parcalar), foreground="#C00000" if oz.get(UYGUN_DEGIL) else "#006100")
         self._sonuc_goster()
-        self.defter.select(self.sonuc_sekmesi)
-        self.durum.config(text=f"{len(self.sonuclar)} satır hesaplandı.")
+        self.sekme_sec(self.sonuc_sekmesi)
+        self.durum.config(text=f"{len(self.sonuclar)} satır hesaplandı; ayrıntılı hesaplar 'Hesap dökümü' sekmesinde.")
+        return True
+
+    # ---- hesap dökümü sekmesi
+    def _dokum_sekmesi(self):
+        f = ttk.Frame(self.defter)
+        self.defter.add(f, text="Hesap dökümü")
+        self.dokum_sekmesi = f
+        ust = ttk.Frame(f)
+        ust.pack(fill="x", padx=8, pady=6)
+        ttk.Label(ust, text="Tüm hesapların formülü, yerine konan sayılar ve sonuçları (önce 'Hesapla' düğmesine basın).", font=("", 10, "bold")).pack(side="left")
+        ttk.Button(ust, text="Metni kaydet (.txt)", command=self.dokum_kaydet).pack(side="right", padx=2)
+        ttk.Button(ust, text="Kopyala", command=self.dokum_kopyala).pack(side="right", padx=2)
+        cerceve = ttk.Frame(f)
+        cerceve.pack(fill="both", expand=True, padx=8, pady=(0, 8))
+        self.dokum_metni = tk.Text(cerceve, wrap="word", font=("Courier New", 10) if sys.platform.startswith("win") else ("DejaVu Sans Mono", 9), padx=8, pady=6, undo=False)
+        kay = ttk.Scrollbar(cerceve, orient="vertical", command=self.dokum_metni.yview)
+        self.dokum_metni.configure(yscrollcommand=kay.set)
+        self.dokum_metni.pack(side="left", fill="both", expand=True)
+        kay.pack(side="right", fill="y")
+        t = self.dokum_metni
+        t.tag_configure("bolum", background="#1F3864", foreground="#FFFFFF", font=("", 11, "bold"), spacing1=10, spacing3=4)
+        t.tag_configure("blok", font=("", 10, "bold"), foreground="#1F3864", spacing1=8)
+        t.tag_configure("madde", foreground="#7F7F7F", font=("", 8))
+        t.tag_configure("adim", lmargin1=18, lmargin2=34)
+        t.tag_configure("sonuc", font=("", 10, "bold"), lmargin1=18, lmargin2=34, foreground="#222222", spacing3=2)
+        t.tag_configure("uygun", foreground="#006100", font=("", 10, "bold"), lmargin1=18, lmargin2=34)
+        t.tag_configure("uygunsuz", foreground="#C00000", font=("", 10, "bold"), lmargin1=18, lmargin2=34)
+        t.tag_configure("kosullu", foreground="#9C5700", font=("", 10, "bold"), lmargin1=18, lmargin2=34)
+        t.insert("1.0", "Henüz hesaplanmadı. 'Hesapla' düğmesine basın.")
+        t.configure(state="disabled")
+
+    def dokum_goster(self, bolumler):
+        t = self.dokum_metni
+        t.configure(state="normal")
+        t.delete("1.0", "end")
+        for bo in bolumler:
+            t.insert("end", bo.ad + "\n", "bolum")
+            for bl in bo.bloklar:
+                t.insert("end", "▌ " + bl.baslik, "blok")
+                if bl.madde:
+                    t.insert("end", "   [" + bl.madde + "]", "madde")
+                t.insert("end", "\n")
+                for a in bl.adimlar:
+                    t.insert("end", "• " + a + "\n", "adim")
+                etiket = {"UYGUN": "uygun", "UYGUN DEĞİL": "uygunsuz", "KOŞULLU UYGUN": "kosullu"}.get(bl.durum, "sonuc")
+                t.insert("end", "► Sonuç: " + bl.sonuc + (f"   —  {bl.durum}" if bl.durum else "") + "\n", etiket)
+        t.configure(state="disabled")
+        self._dokum_duz = DOKUM.dokum_duz_metin(bolumler)
+
+    def dokum_kopyala(self):
+        self.clipboard_clear()
+        self.clipboard_append(getattr(self, "_dokum_duz", ""))
+        self.durum.config(text="Hesap dökümü panoya kopyalandı.")
+
+    def dokum_kaydet(self):
+        if not getattr(self, "_dokum_duz", ""):
+            messagebox.showinfo("Hesap dökümü", "Önce 'Hesapla' düğmesine basın.")
+            return
+        yol = filedialog.asksaveasfilename(defaultextension=".txt", initialfile=self._dosya_adi("txt").replace("_yangin_hesabi", "_hesap_dokumu"), filetypes=[("Metin", "*.txt")])
+        if yol:
+            with open(yol, "w", encoding="utf-8") as f:
+                f.write(self._dokum_duz)
+            self.durum.config(text=f"Hesap dökümü kaydedildi: {yol}")
 
     def _sonuc_goster(self):
         self.sonuc_agaci.delete(*self.sonuc_agaci.get_children())
@@ -655,8 +1103,7 @@ class Uygulama(tk.Tk):
         return f"{ad}_yangin_hesabi.{uzanti}"
 
     def rapor_kaydet(self, tur: str):
-        self.hesapla()
-        if not self.sonuclar:
+        if not self.hesapla(sor=True):
             return
         yol = filedialog.asksaveasfilename(defaultextension="." + tur, initialfile=self._dosya_adi(tur),
                                            filetypes=[("Excel" if tur == "xlsx" else "Word", "*." + tur)])

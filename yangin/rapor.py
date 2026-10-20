@@ -16,6 +16,7 @@ from openpyxl import Workbook
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
 
+from . import dokum as D
 from . import hesaplar as H
 from . import tablolar as T
 from .modeller import (
@@ -189,6 +190,28 @@ def excel_olustur(g: Girdi, sonuclar: list[Sonuc] | None = None) -> bytes:
         for j, w in enumerate([22, 40, 14, 18, 18, 16, 12], 1):
             ws4.column_dimensions[get_column_letter(j)].width = w
 
+    # --- Hesap dökümü
+    ws6 = wb.create_sheet("Hesap Dökümü")
+    for j, b in enumerate(["Bölüm", "Hesap", "Madde / Ek", "Adım (formül ve yerine konan sayılar)", "Sonuç", "Durum"], 1):
+        c = ws6.cell(1, j, b)
+        c.fill, c.font, c.border = baslik_fill, baslik_font, kenar
+    r6 = 2
+    for bolum in D.hesap_dokumu(g):
+        for blok in bolum.bloklar:
+            for i, adim in enumerate(blok.adimlar):
+                son = i == len(blok.adimlar) - 1
+                vals = [bolum.ad if i == 0 else "", blok.baslik if i == 0 else "", blok.madde if i == 0 else "", adim, blok.sonuc if son else "", blok.durum if son else ""]
+                for j, v in enumerate(vals, 1):
+                    c = ws6.cell(r6, j, v)
+                    c.alignment = Alignment(wrap_text=True, vertical="top")
+                    c.border = kenar
+                if son and blok.durum:
+                    ws6.cell(r6, 6).fill = PatternFill("solid", fgColor=DURUM_RENK.get(blok.durum, "FFFFFF"))
+                r6 += 1
+    for j, w in enumerate([34, 36, 22, 95, 30, 16], 1):
+        ws6.column_dimensions[get_column_letter(j)].width = w
+    ws6.freeze_panes = "A2"
+
     # --- Dayanak
     ws5 = wb.create_sheet("Dayanak")
     ws5.append(["Kaynak"])
@@ -338,7 +361,40 @@ def word_olustur(g: Girdi, sonuclar: list[Sonuc] | None = None) -> bytes:
             for j, w in enumerate(genislik):
                 c[j].width = w
 
-    doc.add_heading("5. Dayanak ve uyarılar", level=1)
+    doc.add_heading("5. Ayrıntılı hesap dökümü", level=1)
+    doc.add_paragraph("Aşağıda her hesabın formülü, yerine konan sayılar ve sonucu adım adım verilmiştir.")
+    for bolum in D.hesap_dokumu(g):
+        doc.add_heading(bolum.ad, level=2)
+        for blok in bolum.bloklar:
+            p = doc.add_paragraph()
+            p.paragraph_format.space_after = Pt(1)
+            p.paragraph_format.keep_with_next = True
+            r = p.add_run(blok.baslik)
+            r.bold = True
+            if blok.madde:
+                r2 = p.add_run(f"   [{blok.madde}]")
+                r2.font.size = Pt(8.5)
+                r2.font.color.rgb = RGBColor(0x59, 0x59, 0x59)
+            for adim in blok.adimlar:
+                q = doc.add_paragraph(style="List Bullet")
+                q.paragraph_format.space_after = Pt(0)
+                rr = q.add_run(adim)
+                rr.font.size = Pt(9)
+            q = doc.add_paragraph()
+            q.paragraph_format.left_indent = Cm(0.6)
+            q.paragraph_format.space_after = Pt(6)
+            a = q.add_run("Sonuç: ")
+            a.bold = True
+            a.font.size = Pt(9.5)
+            b_ = q.add_run(blok.sonuc + (f"  —  {blok.durum}" if blok.durum else ""))
+            b_.bold = True
+            b_.font.size = Pt(9.5)
+            if blok.durum == UYGUN_DEGIL:
+                b_.font.color.rgb = RGBColor(0xC0, 0x00, 0x00)
+            elif blok.durum == UYGUN:
+                b_.font.color.rgb = RGBColor(0x00, 0x61, 0x00)
+
+    doc.add_heading("6. Dayanak ve uyarılar", level=1)
     doc.add_paragraph(f"Dayanak: {YONETMELIK}.")
     doc.add_paragraph(f"Açıklayıcı kaynak: {KILAVUZ}.")
     doc.add_paragraph("Danıştay 10. Daire kararı (E.2019/261, K.2021/5537; İDDK 22/2/2023, E.2022/2463, K.2023/317) ile Ek-7 tablosunun endüstriyel, ticaret, kurum ve toplanma amaçlı yapılara ilişkin kısımları iptal edilmiştir; rapor bu hali esas almıştır.")
