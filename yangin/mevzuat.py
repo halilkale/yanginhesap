@@ -55,6 +55,8 @@ TABLO_MADDE: dict[str, dict[str, str]] = {
     "kapi": {"ad": "Madde 47", "gen": "Madde 33(5), 47(1)", "yuk": "Madde 47(1)", "kanat": "Madde 47(4)", "kisi": "Madde 47(2)", "yone": "Madde 47(2)",
              "esik": "Madde 47(1)", "kuvvet": "Madde 47(6)"},
     "duman": {"ad": "Madde 88", "tur": "Madde 88(3)", "alan": "Madde 88(3)", "yuk": "Madde 88(3)"},
+    "yyb": {"bolum": "Madde 4(tt), 24", "alan": "Madde 24(6), Ek-4", "kat": "Madde 24"},
+    "yyk": {"bolum": "Madde 4(yy)", "malzeme": "Madde 4(yy)", "kg": "Madde 4(yy)", "isil": "Madde 4(yy)"},
     "tank": {"ad": "Madde 113", "sinif": "Madde 113, 118(2)", "hacim": "Madde 114, Ek-11, Ek-12", "tur": "Madde 119, 120, Ek-12/C"},
 }
 

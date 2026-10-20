@@ -639,6 +639,7 @@ class Uygulama(tk.Tk):
         self._genel_sekmeler()
         self._kacis_sekmesi()
         self._merdiven_sekmesi()
+        self._yuk_sekmesi()
         self._sonuc_sekmesi()
         self._dokum_sekmesi()
         self.defter.insert(1, self.f_kacis)       # Genel → Kullanıcı yükü → Merdiven → Su ... sırası
@@ -754,6 +755,32 @@ class Uygulama(tk.Tk):
                                        aciklama="Tür: yerustu = açıkta yerüstü tank, yeralti = yeraltı tankı, depo_icinde = depo binası içinde.")
         self.t_tank.pack(fill="both", expand=True, padx=6)
 
+    def _yuk_sekmesi(self):
+        f = ttk.Frame(self.defter)
+        self.defter.add(f, text="Yangın yükü")
+        ttk.Label(f, wraplength=1200, justify="left", foreground="#1F3864",
+                  text="Yangın duvarlarıyla ayrılmış her bölümü (kompartıman) 'Bölümler' tablosuna alanıyla girin; her bölümde bulunan yanıcı malzemeleri 'Malzemeler' tablosuna miktarıyla (kg) girin. "
+                       "Yangın yükü q = Σ(kütle × alt ısıl değer) ÷ alan [MJ/m²] hesaplanır ve bölüm alanı Ek-4 sınırıyla karşılaştırılır. Isıl değerler yaygın literatür ortalamasıdır; "
+                       "MSDS/laboratuvar değeri biliniyorsa kalem satırına yazın. Malzemeler tablosuna yeni bir bölüm adı yazarsanız Bölümler tablosuna otomatik eklenir (alanını girin)."
+                  ).pack(anchor="w", padx=6, pady=4)
+        self.t_yyb = TabloDuzenleyici(f, TABLOLAR["yyb"], anahtar="yyb", baslik="Bölümler (kompartımanlar)")
+        self.t_yyb.pack(fill="both", expand=True, padx=6)
+        self.t_yyk = TabloDuzenleyici(f, TABLOLAR["yyk"], anahtar="yyk", degisti=self.yuk_senkron, baslik="Malzemeler")
+        self.t_yyk.pack(fill="both", expand=True, padx=6)
+
+    def yuk_senkron(self):
+        """Malzemeler tablosunda geçen bölüm adı Bölümler tablosunda yoksa otomatik eklenir."""
+        mevcut = {str(r["bolum"]).strip() for r in self.t_yyb.satirlar()}
+        eklenen = []
+        for r in self.t_yyk.satirlar():
+            ad = str(r["bolum"] or "").strip()
+            if ad and ad not in mevcut:
+                self.t_yyb.satir_ekle({"bolum": ad, "alan": 0, "kat": "", "tur": "Depo" if "depo" in ad.lower() else "Endüstriyel (üretim)"})
+                mevcut.add(ad)
+                eklenen.append(ad)
+        if eklenen:
+            self.durum.config(text="Otomatik: " + ", ".join(repr(a) for a in eklenen) + " bölümü 'Bölümler' tablosuna eklendi — alanını girmeyi unutmayın.")
+
     def _sonuc_sekmesi(self):
         f = ttk.Frame(self.defter)
         self.defter.add(f, text="Sonuçlar")
@@ -813,6 +840,8 @@ class Uygulama(tk.Tk):
                              "yone": k.kacis_yonune_aciliyor, "esik": k.esik_var, "kuvvet": k.acma_kuvveti_N} for k in g.kapilar])
         self.t_duman.doldur([{"ad": m.ad, "tur": m.tur, "alan": m.alan_m2, "yuk": m.yukseklik_m} for m in g.duman_mahalleri])
         self.t_tank.doldur([{"ad": t.ad, "sinif": t.sinif, "hacim": t.hacim_L, "tur": t.tur} for t in g.sivi_tanklar])
+        self.t_yyb.doldur([{"bolum": b.ad, "alan": b.alan_m2, "kat": b.kat, "tur": "Depo" if b.kullanim == "depo" else "Endüstriyel (üretim)"} for b in g.yangin_yuku_bolumleri])
+        self.t_yyk.doldur([{"bolum": k.bolum, "malzeme": k.malzeme, "kg": k.kg, "isil": k.isil_MJkg} for k in g.yangin_yuku_kalemleri])
         self.tehlike_belirlendi = True           # yüklenen projede tehlike sınıfı belirlenmiştir
         self._gecildi.clear()
         if hasattr(self, "tesis_secim"):
@@ -854,7 +883,8 @@ class Uygulama(tk.Tk):
                 veri[ad] = v.get()
         g = Girdi(**veri)
         return tablolari_uygula(g, self.t_mahal.satirlar(), self.t_kat.satirlar(), self.t_merdiven.satirlar(),
-                                self.t_kapi.satirlar(), self.t_duman.satirlar(), self.t_tank.satirlar())
+                                self.t_kapi.satirlar(), self.t_duman.satirlar(), self.t_tank.satirlar(),
+                                self.t_yyb.satirlar(), self.t_yyk.satirlar())
 
     # ---- zorunlu alan denetimi, otomatik kat ekleme
     SEKME_ALANLARI = {
@@ -909,6 +939,16 @@ class Uygulama(tk.Tk):
                     e.append("Kazan dairesi var: ısıl kapasite (kW) girilmedi")
                 if g.kazan_alani_m2 <= 0:
                     e.append("Kazan dairesi var: döşeme alanı girilmedi")
+        elif sekme == "Yangın yükü":
+            adlar = {b.ad.strip() for b in g.yangin_yuku_bolumleri}
+            for b in g.yangin_yuku_bolumleri:
+                if b.alan_m2 <= 0:
+                    e.append(f"'{b.ad}' bölümünün alanı girilmedi")
+            for k in g.yangin_yuku_kalemleri:
+                if k.bolum.strip() not in adlar:
+                    e.append(f"'{k.malzeme}' kalemi için '{k.bolum}' bölümü tanımlı değil")
+                if k.kg <= 0:
+                    e.append(f"'{k.bolum}' / '{k.malzeme}': miktar (kg) girilmedi")
         elif sekme == "Çevre ve ekipler":
             if g.itfaiye_son_nokta_mesafe_m <= 0:
                 e.append("İtfaiye aracının son yaklaşma noktasından cepheye mesafe girilmedi (Madde 22)")

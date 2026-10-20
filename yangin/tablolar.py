@@ -395,3 +395,25 @@ EK11 = {
 
 # Madde 118(2): karışık depolamada Sınıf IA cinsinden eşdeğerlik bölenleri
 IA_ESDEGER_BOLEN = {"IA": 1, "IB": 2, "IC": 4, "II": 12, "IIIA": 40, "IIIB": 80}
+
+
+# --------------------------------------------------------------------------
+# Yangın yükü: malzeme alt ısıl değerleri (MJ/kg)
+# Yönetmelik (Madde 4(yy)) yangın yükünü tanımlar ancak ısıl değer tablosu vermez. Aşağıdaki değerler yaygın literatür
+# (EN 1991-1-2 Ek-E ve ilgili kaynaklar) ortalamalarıdır; MSDS / laboratuvar değeri varsa kalem satırında elle girilmelidir.
+# --------------------------------------------------------------------------
+ISIL_DEGERLERI = {
+    "Ahşap (palet, kereste, kontrplak)": 17.5,
+    "Karton / kâğıt (koli, ambalaj)": 17.0,
+    "Plastik — PE / PP (kasa, mamül)": 43.0,
+    "Plastik — PS (polistiren)": 40.0,
+    "Plastik — ABS": 35.0,
+    "Plastik — PVC": 20.0,
+    "Plastik — PA (naylon) / polyester": 31.0,
+    "Kauçuk / lastik": 32.0,
+    "Tekstil (pamuk, elyaf)": 17.0,
+    "Mineral yağ / gres": 41.0,
+    "Solvent bazlı sıvı boya / vernik (varsayım)": 25.0,
+    "Tiner / solvent (varsayım)": 35.0,
+    "Diğer (ısıl değeri elle gir)": 0.0,
+}

@@ -69,6 +69,7 @@ def hesap_dokumu(g: Girdi) -> list[Bolum]:
     out.append(_tehlikeli(g))
     out.append(_cevre(g))
     out.append(_ekip(g))
+    out.append(_yuk(g))
     return [b for b in out if b.bloklar]
 
 
@@ -550,6 +551,28 @@ def _ekip(g: Girdi) -> Bolum:
                               [f"Binadaki kişi sayısı {n(kisi, 0)} > 50 ?  → evet", "Söndürme ≥3 + Kurtarma ≥3 + Koruma ≥2 + İlk yardım ≥2 = 10 kişi"], "En az 10 kişilik 4 ekip"))
     else:
         b.bloklar.append(Blok("Ekip kurulması", "Madde 126", [f"Binadaki kişi sayısı {n(kisi, 0)} > 50 ?  → hayır"], "Zorunlu değil"))
+    return b
+
+
+# --- 15 -------------------------------------------------------------------
+def _yuk(g: Girdi) -> Bolum:
+    b = Bolum("15. Yangın yükü ve bölüm alanları")
+    for bol in g.yangin_yuku_bolumleri:
+        kal = [k for k in g.yangin_yuku_kalemleri if k.bolum.strip() == bol.ad.strip()]
+        adim, MJ = [], 0.0
+        for k in kal:
+            h = k.isil_MJkg or T.ISIL_DEGERLERI.get(k.malzeme, 0.0)
+            MJ += k.kg * h
+            adim.append(f"{k.malzeme}: {n(k.kg, 0)} kg × {n(h)} MJ/kg = {n(k.kg * h, 0)} MJ")
+        if bol.alan_m2 <= 0:
+            continue
+        q = MJ / bol.alan_m2
+        adim.append(f"Toplam enerji = {n(MJ, 0)} MJ")
+        adim.append(f"Yangın yükü q = Σ(m × H) ÷ A = {n(MJ, 0)} MJ ÷ {n(bol.alan_m2)} m² = {n(q)} MJ/m²")
+        adim.append(f"Odun eşdeğeri = {n(q)} ÷ 17,5 = {n(q / 17.5)} kg/m²")
+        durum, sinir, _ = H.ek4_alan_durumu(g, bol.alan_m2, bol.kullanim)
+        adim.append(f"Bölüm alanı {n(bol.alan_m2)} m² — Ek-4 ({'depo' if bol.kullanim == 'depo' else 'endüstriyel yapı'}, {T.TEHLIKE_SINIFLARI[g.tehlike]}) kompartıman sınırı: {sinir}")
+        b.bloklar.append(Blok(f"Yangın yükü — {bol.ad}", "Madde 4(yy), 24, Ek-4", adim, f"{n(q)} MJ/m²", durum))
     return b
 
 

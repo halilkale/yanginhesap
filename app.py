@@ -23,7 +23,7 @@ from yangin.ornek import ornek_fabrika
 
 st.set_page_config(page_title="Yangın Koruma Hesabı", page_icon="🔥", layout="wide")
 
-LIST_ALANLAR = {"katlar", "merdivenler", "kapilar", "duman_mahalleri", "sivi_tanklar"}
+LIST_ALANLAR = {"katlar", "merdivenler", "kapilar", "duman_mahalleri", "sivi_tanklar", "yangin_yuku_bolumleri", "yangin_yuku_kalemleri"}
 SADE_ALANLAR = [f.name for f in dataclasses.fields(Girdi) if f.name not in LIST_ALANLAR]
 
 EK5A_AD = [a for a, _, _ in T.EK5A]

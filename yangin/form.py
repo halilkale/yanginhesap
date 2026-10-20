@@ -392,7 +392,8 @@ def formdan_oku(veri: bytes) -> tuple[Girdi, list[str], list[str]]:
                     d[anahtar] = "" if bos else str(h).strip()
             liste.append(d)
         satirlar[t.anahtar] = liste
-    g = E.tablolari_uygula(g, satirlar["mahal"], satirlar["kat"], satirlar["merdiven"], satirlar["kapi"], satirlar["duman"], satirlar["tank"])
+    g = E.tablolari_uygula(g, satirlar["mahal"], satirlar["kat"], satirlar["merdiven"], satirlar["kapi"], satirlar["duman"], satirlar["tank"],
+                           satirlar.get("yyb", []), satirlar.get("yyk", []))
     mahal_katlari = {r["kat"] for r in satirlar["mahal"]}
     kat_katlari = {r["kat"] for r in satirlar["kat"]}
     for k in sorted(mahal_katlari - kat_katlari):
@@ -439,6 +440,8 @@ def doldurulmus_form(g: Girdi) -> bytes:
                   "esik": k.esik_var, "kuvvet": k.acma_kuvveti_N or None} for k in g.kapilar],
         "duman": [{"ad": m.ad, "tur": m.tur, "alan": m.alan_m2, "yuk": m.yukseklik_m} for m in g.duman_mahalleri],
         "tank": [{"ad": t.ad, "sinif": t.sinif, "hacim": t.hacim_L, "tur": t.tur} for t in g.sivi_tanklar],
+        "yyb": [{"bolum": b.ad, "alan": b.alan_m2, "kat": b.kat, "tur": "Depo" if b.kullanim == "depo" else "Endüstriyel (üretim)"} for b in g.yangin_yuku_bolumleri],
+        "yyk": [{"bolum": k.bolum, "malzeme": k.malzeme, "kg": k.kg, "isil": k.isil_MJkg or None} for k in g.yangin_yuku_kalemleri],
     }
     for t in A.TABLO_SAYFALARI:
         ws = wb[t.ad]

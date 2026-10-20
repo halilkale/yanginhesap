@@ -98,6 +98,22 @@ class SivirTank:
 
 
 @dataclass
+class YanginYukuBolum:
+    ad: str = "Bölüm"
+    alan_m2: float = 0.0
+    kat: str = ""
+    kullanim: str = "endustriyel"     # Ek-4 sınırı için: endustriyel | depo
+
+
+@dataclass
+class YanginYukuKalem:
+    bolum: str = ""
+    malzeme: str = ""
+    kg: float = 0.0
+    isil_MJkg: float = 0.0     # 0 ise malzeme tablosundaki değer kullanılır
+
+
+@dataclass
 class Girdi:
     # ------------------ Genel ------------------
     proje_adi: str = "Fabrika Binası"
@@ -191,6 +207,10 @@ class Girdi:
     basinc_sizinti_debisi_m3s: float = 0.0
     duman_mahalleri: list = field(default_factory=list)
 
+    # ------------------ Yangın yükü (bölüm bazında) ------------------
+    yangin_yuku_bolumleri: list = field(default_factory=list)    # list[YanginYukuBolum]
+    yangin_yuku_kalemleri: list = field(default_factory=list)    # list[YanginYukuKalem]
+
     # ------------------ Kazan / yakıt ------------------
     kazan_var: bool = False
     kazan_kw: float = 0.0
@@ -240,9 +260,12 @@ class Girdi:
         kap = [Kapi(**m) for m in d.pop("kapilar", [])]
         dm = [DumanMahali(**m) for m in d.pop("duman_mahalleri", [])]
         st = [SivirTank(**m) for m in d.pop("sivi_tanklar", [])]
+        yyb = [YanginYukuBolum(**m) for m in d.pop("yangin_yuku_bolumleri", [])]
+        yyk = [YanginYukuKalem(**m) for m in d.pop("yangin_yuku_kalemleri", [])]
         known = {f.name for f in fields(cls)}
         g = cls(**{k: v for k, v in d.items() if k in known})
         g.katlar, g.merdivenler, g.kapilar, g.duman_mahalleri, g.sivi_tanklar = kats, merd, kap, dm, st
+        g.yangin_yuku_bolumleri, g.yangin_yuku_kalemleri = yyb, yyk
         return g
 
     @classmethod

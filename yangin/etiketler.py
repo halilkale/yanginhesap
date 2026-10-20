@@ -2,9 +2,9 @@
 from __future__ import annotations
 
 from . import tablolar as T
-from .modeller import DumanMahali, Girdi, Kapi, Kat, Mahal, Merdiven, SivirTank
+from .modeller import DumanMahali, Girdi, Kapi, Kat, Mahal, Merdiven, SivirTank, YanginYukuBolum, YanginYukuKalem
 
-LIST_ALANLAR = {"katlar", "merdivenler", "kapilar", "duman_mahalleri", "sivi_tanklar"}
+LIST_ALANLAR = {"katlar", "merdivenler", "kapilar", "duman_mahalleri", "sivi_tanklar", "yangin_yuku_bolumleri", "yangin_yuku_kalemleri"}
 EK5A_AD = [a for a, _, _ in T.EK5A]
 EK5A_KATSAYI = {a: k for a, k, _ in T.EK5A}
 CIKIS_TURLERI = {"dis_kapi": "Dışarı çıkış kapısı", "diger_kapi": "Diğer kapı / koridor kapısı", "merdiven": "Kaçış merdiveni", "koridor": "Rampa / koridor"}
@@ -39,6 +39,10 @@ TABLOLAR = {
              ("esik", "Eşik var", "b", None, 70), ("kuvvet", "Açma kuvveti (N)", "f", None, 110)],
     "duman": [("ad", "Ad", "t", None, 160), ("tur", "Tür", "c", ["kazan", "otopark", "bodrum_depo", "diger"], 120),
               ("alan", "Alan (m²)", "f", None, 100), ("yuk", "Yükseklik (m)", "f", None, 100)],
+    "yyb": [("bolum", "Bölüm / kompartıman", "t", None, 200), ("alan", "Alan (m²)", "f", None, 100), ("kat", "Kat", "t", None, 120),
+            ("tur", "Kullanım", "c", ["Endüstriyel (üretim)", "Depo"], 150)],
+    "yyk": [("bolum", "Bölüm / kompartıman", "t", None, 200), ("malzeme", "Malzeme", "c", list(T.ISIL_DEGERLERI), 330),
+            ("kg", "Miktar (kg)", "f", None, 100), ("isil", "Isıl değer (MJ/kg) [0=tablodan]", "f", None, 180)],
     "tank": [("ad", "Ad", "t", None, 160), ("sinif", "Sınıf", "c", list(T.IA_ESDEGER_BOLEN), 80), ("hacim", "Hacim (L)", "f", None, 100),
              ("tur", "Tür", "c", ["yerustu", "yeralti", "depo_icinde"], 120)],
 }
@@ -59,7 +63,7 @@ def _bool(x) -> bool:
     return str(x) in ("1", "True", "true", "Evet", "✔")
 
 
-def tablolari_uygula(g: Girdi, mahal, kat, merdiven, kapi, duman, tank) -> Girdi:
+def tablolari_uygula(g: Girdi, mahal, kat, merdiven, kapi, duman, tank, yyb=(), yyk=()) -> Girdi:
     """Etiketli satır sözlüklerini (arayüz/form) Girdi nesnesine işler."""
     ters_cikis = {b: a for a, b in CIKIS_TURLERI.items()}
     ters_yon = {b: a for a, b in YONLER.items()}
@@ -87,4 +91,7 @@ def tablolari_uygula(g: Girdi, mahal, kat, merdiven, kapi, duman, tank) -> Girdi
                       kacis_yonune_aciliyor=_bool(r["yone"]), esik_var=_bool(r["esik"]), acma_kuvveti_N=_f(r["kuvvet"])) for r in kapi]
     g.duman_mahalleri = [DumanMahali(ad=str(r["ad"] or "Mahal"), tur=str(r["tur"] or "diger"), alan_m2=_f(r["alan"]), yukseklik_m=_f(r["yuk"], 3.0)) for r in duman]
     g.sivi_tanklar = [SivirTank(ad=str(r["ad"] or "Tank"), sinif=str(r["sinif"] or "II"), hacim_L=_f(r["hacim"]), tur=str(r["tur"] or "yerustu")) for r in tank]
+    g.yangin_yuku_bolumleri = [YanginYukuBolum(ad=str(r["bolum"] or "Bölüm"), alan_m2=_f(r["alan"]), kat=str(r.get("kat", "") or ""),
+                                         kullanim="depo" if str(r.get("tur", "")).startswith("Depo") else "endustriyel") for r in yyb]
+    g.yangin_yuku_kalemleri = [YanginYukuKalem(bolum=str(r["bolum"] or ""), malzeme=str(r["malzeme"] or ""), kg=_f(r["kg"]), isil_MJkg=_f(r["isil"])) for r in yyk]
     return g

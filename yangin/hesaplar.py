@@ -1045,6 +1045,62 @@ def ekipler(g: Girdi) -> list[Sonuc]:
 
 
 # ---------------------------------------------------------------------------
+# 15. Yangın yükü ve bölüm (kompartıman) alanları
+# ---------------------------------------------------------------------------
+def ek4_alan_durumu(g: Girdi, alan: float, kullanim: str | None = None) -> tuple[str, str, str]:
+    """Bir kompartıman alanı için Ek-4 kontrolü: (durum, sınır metni, açıklama). kullanim: bölüme özgü (endustriyel | depo)."""
+    limit, nota, ack = T.ek4_limit(kullanim or g.kullanim, g.tehlike)
+    ks = g.algilama_var or g.yagmurlama_var or g.duman_tahliye_var
+    if limit is None:
+        return UYGUN, "sınırlama yok", ack
+    etkin = limit
+    if nota == 1 and ks:
+        etkin = limit * 2
+    elif (nota == 2 and ks) or (nota == 3 and (g.kat_sayisi == 1 or ks)):
+        return KOSULLU, "sınırsız (uygun yangın kontrol sistemleri)", f"{ack}: tablo sınırı {limit:,.0f} m²; kontrol sistemleri/tek katlı koşulu ile sınırsız (Ek-4 dipnotu); itfaiye değerlendirmesi gerekir."
+    durum = _karsilastir(alan, etkin)
+    return durum, f"{etkin:,.0f} m²", f"{ack}: sınır {etkin:,.0f} m²."
+
+
+def yangin_yuku(g: Girdi) -> list[Sonuc]:
+    B = "15. Yangın yükü ve bölüm alanları"
+    s: list[Sonuc] = []
+    adlar = {b.ad.strip() for b in g.yangin_yuku_bolumleri}
+    for k in g.yangin_yuku_kalemleri:
+        if k.bolum.strip() not in adlar:
+            s.append(Sonuc(B, f"Malzeme kalemi '{k.malzeme}' ({k.kg:g} kg)", "—", "", KONTROL, "Madde 4(yy)", f"'{k.bolum}' bölümü Bölümler tablosunda tanımlı değil; alanı girilmeden yangın yükü hesaplanamaz."))
+    genel_MJ = genel_alan = 0.0
+    for b in g.yangin_yuku_bolumleri:
+        K = f"{B} — {b.ad}"
+        kal = [k for k in g.yangin_yuku_kalemleri if k.bolum.strip() == b.ad.strip()]
+        MJ = kg = 0.0
+        eksik_isil = []
+        for k in kal:
+            h = k.isil_MJkg or T.ISIL_DEGERLERI.get(k.malzeme, 0.0)
+            if h <= 0:
+                eksik_isil.append(k.malzeme)
+            MJ += k.kg * h
+            kg += k.kg
+        if b.alan_m2 <= 0:
+            s.append(Sonuc(K, "Yangın yükü", "—", "MJ/m²", KONTROL, "Madde 4(yy)", "Bölüm alanı girilmedi."))
+            continue
+        q = MJ / b.alan_m2
+        genel_MJ += MJ
+        genel_alan += b.alan_m2
+        ack = (f"Yangın yükü = Σ(kütle × alt ısıl değer) / alan = {MJ:,.0f} MJ / {b.alan_m2:,.2f} m² = {q:,.1f} MJ/m². "
+               f"Odun eşdeğeri {q / 17.5:,.1f} kg/m² (17,5 MJ/kg). Yönetmelik yangın yükü için sayısal sınır vermez; tehlike sınıfı faaliyete göre Ek-1'den belirlenir (bilgi niteliğindedir).")
+        s.append(Sonuc(K, "Yangın yükü", _r(q, 1), "MJ/m²", KONTROL if eksik_isil else BILGI, "Madde 4(yy)",
+                       ack + (f" EKSİK: ısıl değeri girilmeyen malzeme: {', '.join(eksik_isil)}." if eksik_isil else "")))
+        s.append(Sonuc(K, "Toplam yanıcı kütle ve enerji", f"{kg:,.0f} kg / {MJ:,.0f} MJ", "", BILGI, "Madde 4(yy)"))
+        durum, sinir, a2 = ek4_alan_durumu(g, b.alan_m2, b.kullanim)
+        s.append(Sonuc(K, "Bölüm alanı — Ek-4 kompartıman sınırı", f"{b.alan_m2:,.2f} m²  (sınır: {sinir})", "", durum, "Madde 24, Ek-4", a2))
+    if genel_alan > 0:
+        s.append(Sonuc(B, "Tüm bölümler ortalama yangın yükü", _r(genel_MJ / genel_alan, 1), "MJ/m²", BILGI, "Madde 4(yy)",
+                       f"{genel_MJ:,.0f} MJ / {genel_alan:,.2f} m² (yalnızca tanımlı bölümler)."))
+    return s
+
+
+# ---------------------------------------------------------------------------
 # Tümü
 # ---------------------------------------------------------------------------
 MODULLER: list[tuple[str, Callable[[Girdi], list[Sonuc]]]] = [
@@ -1062,6 +1118,7 @@ MODULLER: list[tuple[str, Callable[[Girdi], list[Sonuc]]]] = [
     ("Tehlikeli maddeler", tehlikeli_madde),
     ("Çevre ve erişim", cevre_erisim),
     ("Acil durum ekipleri", ekipler),
+    ("Yangın yükü", yangin_yuku),
 ]
 
 

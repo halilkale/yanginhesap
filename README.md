@@ -14,6 +14,10 @@ Windows "bilinmeyen yayıncı" uyarısı verirse *Ek bilgi → Yine de çalışt
 Kendiniz derlemek isterseniz (Windows'ta): `pip install -r requirements-exe.txt` ardından
 `pyinstaller --noconfirm --onefile --windowed --name YanginHesap --collect-data docx --collect-data openpyxl masaustu.py`
 
+## Yangın yükü (bölüm/kompartıman bazında)
+
+Masaüstü arayüzünde **Yangın yükü** sekmesi: her kompartıman için alan ve içindeki yanıcı malzemeler (kg) girilir; program q = Σ(kütle × alt ısıl değer) ÷ alan [MJ/m²] hesaplar ve bölüm alanını Ek-4 sınırıyla (üretim / depo) karşılaştırır. Isıl değerler yönetmelikte yoktur; yaygın literatür ortalamalarıdır, MSDS değeriyle değiştirilebilir. Örnek: `belgeler/tanyeri/` (Tanyeri-Tuzla projesi, varsayım ve açık soru listesi).
+
 ## Mevzuat ipuçları (sarı bilgi penceresi)
 
 Masaüstü arayüzünde herhangi bir alanın etiketinin veya kutusunun (tablolarda sütun başlığının, sonuç satırlarının) üzerine gelince, ilgili **yönetmelik madde/fıkra metni** ve ek özeti sarı bir pencerede görünür.

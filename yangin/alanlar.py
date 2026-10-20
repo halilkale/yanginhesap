@@ -242,6 +242,21 @@ TABLO_SAYFALARI: list[TabloSayfa] = [
                },
                {"ad": "Kapalı otopark", "tur": "otopark", "alan": 2200, "yuk": 3},
                program_sekmesi="Merdiven, kapı, duman, tank → Mekanik duman tahliyesi", kim="V", kaynak="Mimari plan"),
+    TabloSayfa("T7_Yangin_Yuku_Bolumleri", "Tablo 7 — Yangın yükü: bölümler (kompartımanlar)",
+               "Yangın duvarlarıyla ayrılmış (veya ayrılması planlanan) her bölüm/kompartıman için bir satır: adı ve alanı.", "yyb", {
+                   "bolum": "Bölümün adı (ör. Depo alt, Boyahane, Montaj). Tablo 8'deki bölüm adıyla AYNI yazın.", "alan": "Bölümün alanı (m²) — mimari plandan.", "kat": "Bulunduğu kat (bilgi).",
+                   "tur": "Bölüm üretim alanı ise 'Endüstriyel (üretim)', depo ise 'Depo' seçin (Ek-4 kompartıman sınırı buna göre değişir).",
+               },
+               {"bolum": "Depo alt", "alan": 974.18, "kat": "1. kat", "tur": "Depo"},
+               program_sekmesi="Yangın yükü → Bölümler", kim="V", kaynak="Mimari plan, kompartıman çalışması"),
+    TabloSayfa("T8_Yangin_Yuku_Malzeme", "Tablo 8 — Yangın yükü: bölümlerdeki yanıcı malzemeler",
+               "Her bölümde bulunan yanıcı malzeme türü ve ortalama/azami miktarı (kg). Aynı bölümde birden fazla malzeme için ayrı satır yazın.", "yyk", {
+                   "bolum": "Tablo 7'deki bölüm adı.", "malzeme": "Malzeme türünü listeden seçin (alt ısıl değeri otomatik gelir).",
+                   "kg": "Bölümde bulunan miktar (kg). Dolu koli/kasa için içindekiler dahil toplam kütle.",
+                   "isil": "MSDS veya laboratuvar ısıl değeri (MJ/kg) biliniyorsa yazın; boşsa listedeki ortalama değer kullanılır.",
+               },
+               {"bolum": "Depo alt", "malzeme": "Ahşap (palet, kereste, kontrplak)", "kg": 250, "isil": ""},
+               program_sekmesi="Yangın yükü → Malzemeler", kim="V", kaynak="Depo/üretim stok kayıtları, ambalaj ve malzeme listeleri, MSDS"),
     TabloSayfa("T6_Yanici_Sivi", "Tablo 6 — Yanıcı / parlayıcı sıvı tankları ve depolama",
                "Tiner, solvent, boya, akaryakıt, kimyasal vb. sıvıların tankları veya depo bölümleri. Yoksa boş bırakın. Sınıfı bilmiyorsanız parlama noktasını (MSDS 9. bölüm) yazıp mühendise danışın.", "tank", {
                    "ad": "Tank veya depo adı.",
@@ -283,6 +298,6 @@ def kapsam_kontrol() -> list[str]:
     """Girdi'deki tüm basit alanların formda bulunduğunu doğrular; eksik alan adlarını döndürür."""
     import dataclasses
     from .modeller import Girdi
-    liste = {"katlar", "merdivenler", "kapilar", "duman_mahalleri", "sivi_tanklar"}
+    liste = {"katlar", "merdivenler", "kapilar", "duman_mahalleri", "sivi_tanklar", "yangin_yuku_bolumleri", "yangin_yuku_kalemleri"}
     formda = {a.alan for a in TUM_ALANLAR if a.alan}
     return [f.name for f in dataclasses.fields(Girdi) if f.name not in liste and f.name not in formda]

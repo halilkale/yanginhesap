@@ -1,0 +1,754 @@
+{
+  "proje_adi": "Tanyeri — Tuzla Tesisi (yangın kompartıman çalışması)",
+  "tesis_adi": "Tanyeri",
+  "adres": "Tuzla",
+  "hazirlayan": "",
+  "tarih": "",
+  "kullanim": "endustriyel",
+  "tehlike": "OT3",
+  "mevcut_yapi": false,
+  "karisik_kullanim": false,
+  "tasiyici": "betonarme",
+  "kolay_alevlenici": true,
+  "yanmaz_malzeme_yapim": true,
+  "yapi_yuksekligi": 13.0,
+  "bina_yuksekligi": 13.0,
+  "kat_sayisi": 4,
+  "bodrum_kat_sayisi": 0,
+  "bodrum_derinligi": 0.0,
+  "taban_alani": 2258.0,
+  "tesis_toplam_taban_alani": 0.0,
+  "toplam_kapali_alan": 7621.639999999999,
+  "en_buyuk_kat_alani": 2258.0,
+  "bina_boyu": 52.85,
+  "bina_eni": 42.4,
+  "cephe_genisligi": 52.85,
+  "kompartiman_alani": 1403.38,
+  "otopark_alani": 0.0,
+  "yagmurlama_var": false,
+  "yagmurlama_tipi": "islak",
+  "algilama_var": false,
+  "duman_tahliye_var": false,
+  "hidrant_var": true,
+  "dolap_var": true,
+  "katlar": [
+    {
+      "ad": "Zemin kat",
+      "mahaller": [
+        {
+          "ad": "Z01 Giriş",
+          "alan": 67.54,
+          "katsayi": 10,
+          "kisi_belirli": null,
+          "sayilir": true
+        },
+        {
+          "ad": "Z02 Koridor",
+          "alan": 3.34,
+          "katsayi": 10,
+          "kisi_belirli": null,
+          "sayilir": false
+        },
+        {
+          "ad": "Z03 Personel",
+          "alan": 13.17,
+          "katsayi": 10,
+          "kisi_belirli": null,
+          "sayilir": true
+        },
+        {
+          "ad": "Z04 Personel/2",
+          "alan": 20.22,
+          "katsayi": 10,
+          "kisi_belirli": null,
+          "sayilir": true
+        },
+        {
+          "ad": "Z05 Koridor",
+          "alan": 5.08,
+          "katsayi": 10,
+          "kisi_belirli": null,
+          "sayilir": false
+        },
+        {
+          "ad": "Z06 Hol",
+          "alan": 20.78,
+          "katsayi": 10,
+          "kisi_belirli": null,
+          "sayilir": false
+        },
+        {
+          "ad": "Z07 Arşiv",
+          "alan": 20.09,
+          "katsayi": 30,
+          "kisi_belirli": null,
+          "sayilir": true
+        },
+        {
+          "ad": "Z08 WC",
+          "alan": 13.63,
+          "katsayi": 10,
+          "kisi_belirli": null,
+          "sayilir": false
+        },
+        {
+          "ad": "Z09 Erkek soyunma",
+          "alan": 24.78,
+          "katsayi": 10,
+          "kisi_belirli": null,
+          "sayilir": true
+        },
+        {
+          "ad": "Z10 WC",
+          "alan": 9.83,
+          "katsayi": 10,
+          "kisi_belirli": null,
+          "sayilir": false
+        },
+        {
+          "ad": "Z11 Koridor",
+          "alan": 6.98,
+          "katsayi": 10,
+          "kisi_belirli": null,
+          "sayilir": false
+        },
+        {
+          "ad": "Z12 Koridor",
+          "alan": 6.83,
+          "katsayi": 10,
+          "kisi_belirli": null,
+          "sayilir": false
+        },
+        {
+          "ad": "Z13 Toplantı odası (net)",
+          "alan": 31.35,
+          "katsayi": 1.5,
+          "kisi_belirli": null,
+          "sayilir": true
+        },
+        {
+          "ad": "Z14 Kazan dairesi",
+          "alan": 35.96,
+          "katsayi": 30,
+          "kisi_belirli": null,
+          "sayilir": true
+        },
+        {
+          "ad": "Z15 Depo",
+          "alan": 36.36,
+          "katsayi": 30,
+          "kisi_belirli": null,
+          "sayilir": true
+        },
+        {
+          "ad": "Z16 Merdiven holü",
+          "alan": 8.5,
+          "katsayi": 10,
+          "kisi_belirli": null,
+          "sayilir": false
+        }
+      ],
+      "cikis_sayisi": 0,
+      "cikis_turu": "dis_kapi",
+      "mevcut_genislik_cm": 0.0,
+      "tekil_cikis_genislik_cm": 0.0,
+      "yon": "iki",
+      "en_uzak_mesafe_m": 0.0,
+      "kus_ucusu_mesafe_m": 0.0,
+      "cikmaz_mesafe_m": 0.0,
+      "mekan_diyagonal_m": 0.0,
+      "cikislar_arasi_mesafe_m": 0.0
+    },
+    {
+      "ad": "1. kat",
+      "mahaller": [
+        {
+          "ad": "101 Hol",
+          "alan": 23.21,
+          "katsayi": 10,
+          "kisi_belirli": null,
+          "sayilir": false
+        },
+        {
+          "ad": "102 Satın alma / dış ticaret / satış md.",
+          "alan": 58.4,
+          "katsayi": 10,
+          "kisi_belirli": null,
+          "sayilir": true
+        },
+        {
+          "ad": "103 Koridor",
+          "alan": 8.75,
+          "katsayi": 10,
+          "kisi_belirli": null,
+          "sayilir": false
+        },
+        {
+          "ad": "104 BN WC",
+          "alan": 2.97,
+          "katsayi": 10,
+          "kisi_belirli": null,
+          "sayilir": false
+        },
+        {
+          "ad": "105 Erkek WC",
+          "alan": 6.16,
+          "katsayi": 10,
+          "kisi_belirli": null,
+          "sayilir": false
+        },
+        {
+          "ad": "106 Muhasebe / mali işler",
+          "alan": 62.11,
+          "katsayi": 10,
+          "kisi_belirli": null,
+          "sayilir": true
+        },
+        {
+          "ad": "107 Kalıp deposu / Enjeksiyon",
+          "alan": 822.67,
+          "katsayi": 10,
+          "kisi_belirli": null,
+          "sayilir": true
+        },
+        {
+          "ad": "108 WC",
+          "alan": 9.7,
+          "katsayi": 10,
+          "kisi_belirli": null,
+          "sayilir": false
+        },
+        {
+          "ad": "109 Merdiven holü",
+          "alan": 5.83,
+          "katsayi": 10,
+          "kisi_belirli": null,
+          "sayilir": false
+        },
+        {
+          "ad": "110 Kalite",
+          "alan": 28.4,
+          "katsayi": 10,
+          "kisi_belirli": null,
+          "sayilir": true
+        },
+        {
+          "ad": "111 Depo",
+          "alan": 974.18,
+          "katsayi": 30,
+          "kisi_belirli": null,
+          "sayilir": true
+        },
+        {
+          "ad": "112 Çizimhane",
+          "alan": 15.71,
+          "katsayi": 10,
+          "kisi_belirli": null,
+          "sayilir": true
+        },
+        {
+          "ad": "113 Merdiven holü",
+          "alan": 8.5,
+          "katsayi": 10,
+          "kisi_belirli": null,
+          "sayilir": false
+        },
+        {
+          "ad": "114 Kırma",
+          "alan": 56.4,
+          "katsayi": 10,
+          "kisi_belirli": null,
+          "sayilir": true
+        },
+        {
+          "ad": "115 Kırma",
+          "alan": 23.57,
+          "katsayi": 10,
+          "kisi_belirli": null,
+          "sayilir": true
+        }
+      ],
+      "cikis_sayisi": 0,
+      "cikis_turu": "dis_kapi",
+      "mevcut_genislik_cm": 0.0,
+      "tekil_cikis_genislik_cm": 0.0,
+      "yon": "iki",
+      "en_uzak_mesafe_m": 0.0,
+      "kus_ucusu_mesafe_m": 0.0,
+      "cikmaz_mesafe_m": 0.0,
+      "mekan_diyagonal_m": 0.0,
+      "cikislar_arasi_mesafe_m": 0.0
+    },
+    {
+      "ad": "2. kat",
+      "mahaller": [
+        {
+          "ad": "201 Hol",
+          "alan": 23.21,
+          "katsayi": 10,
+          "kisi_belirli": null,
+          "sayilir": false
+        },
+        {
+          "ad": "202 Genel müdür odası",
+          "alan": 51.17,
+          "katsayi": 10,
+          "kisi_belirli": null,
+          "sayilir": true
+        },
+        {
+          "ad": "203 Dinlenme",
+          "alan": 14,
+          "katsayi": 10,
+          "kisi_belirli": null,
+          "sayilir": true
+        },
+        {
+          "ad": "204 Koridor",
+          "alan": 8.95,
+          "katsayi": 10,
+          "kisi_belirli": null,
+          "sayilir": false
+        },
+        {
+          "ad": "205 Arşiv",
+          "alan": 4.9,
+          "katsayi": 30,
+          "kisi_belirli": null,
+          "sayilir": true
+        },
+        {
+          "ad": "206 BN WC",
+          "alan": 2.77,
+          "katsayi": 10,
+          "kisi_belirli": null,
+          "sayilir": false
+        },
+        {
+          "ad": "207 Er. WC",
+          "alan": 5.76,
+          "katsayi": 10,
+          "kisi_belirli": null,
+          "sayilir": false
+        },
+        {
+          "ad": "208 Dinlenme",
+          "alan": 8.0,
+          "katsayi": 10,
+          "kisi_belirli": null,
+          "sayilir": true
+        },
+        {
+          "ad": "209 Yönetim kurulu başkanı",
+          "alan": 48.36,
+          "katsayi": 10,
+          "kisi_belirli": null,
+          "sayilir": true
+        },
+        {
+          "ad": "210 Dinlenme",
+          "alan": 80.88,
+          "katsayi": 10,
+          "kisi_belirli": null,
+          "sayilir": true
+        },
+        {
+          "ad": "211 Üretim müdürü",
+          "alan": 38.91,
+          "katsayi": 10,
+          "kisi_belirli": null,
+          "sayilir": true
+        },
+        {
+          "ad": "212 Rezerv alan",
+          "alan": 354,
+          "katsayi": 30,
+          "kisi_belirli": null,
+          "sayilir": true
+        },
+        {
+          "ad": "213 WC",
+          "alan": 9.7,
+          "katsayi": 10,
+          "kisi_belirli": null,
+          "sayilir": false
+        },
+        {
+          "ad": "214 Merdiven holü",
+          "alan": 6.6,
+          "katsayi": 10,
+          "kisi_belirli": null,
+          "sayilir": false
+        },
+        {
+          "ad": "215 Montaj",
+          "alan": 218.26,
+          "katsayi": 10,
+          "kisi_belirli": null,
+          "sayilir": true
+        },
+        {
+          "ad": "216 Merdiven holü",
+          "alan": 8.5,
+          "katsayi": 10,
+          "kisi_belirli": null,
+          "sayilir": false
+        },
+        {
+          "ad": "217 Usta odası",
+          "alan": 16.38,
+          "katsayi": 10,
+          "kisi_belirli": null,
+          "sayilir": true
+        },
+        {
+          "ad": "218 Tampon / Serigrafi",
+          "alan": 162,
+          "katsayi": 10,
+          "kisi_belirli": null,
+          "sayilir": true
+        },
+        {
+          "ad": "219 Boyahane",
+          "alan": 160,
+          "katsayi": 10,
+          "kisi_belirli": null,
+          "sayilir": true
+        },
+        {
+          "ad": "220 Karanlık oda",
+          "alan": 3.72,
+          "katsayi": 10,
+          "kisi_belirli": null,
+          "sayilir": true
+        },
+        {
+          "ad": "221 Kabin",
+          "alan": 38.64,
+          "katsayi": 10,
+          "kisi_belirli": null,
+          "sayilir": true
+        },
+        {
+          "ad": "222 Balkon",
+          "alan": 16,
+          "katsayi": 10,
+          "kisi_belirli": null,
+          "sayilir": false
+        },
+        {
+          "ad": "223 Depo",
+          "alan": 11.31,
+          "katsayi": 30,
+          "kisi_belirli": null,
+          "sayilir": true
+        }
+      ],
+      "cikis_sayisi": 0,
+      "cikis_turu": "dis_kapi",
+      "mevcut_genislik_cm": 0.0,
+      "tekil_cikis_genislik_cm": 0.0,
+      "yon": "iki",
+      "en_uzak_mesafe_m": 0.0,
+      "kus_ucusu_mesafe_m": 0.0,
+      "cikmaz_mesafe_m": 0.0,
+      "mekan_diyagonal_m": 0.0,
+      "cikislar_arasi_mesafe_m": 0.0
+    },
+    {
+      "ad": "3. kat",
+      "mahaller": [
+        {
+          "ad": "301 Merdiven holü",
+          "alan": 10.88,
+          "katsayi": 10,
+          "kisi_belirli": null,
+          "sayilir": false
+        },
+        {
+          "ad": "302 Mescit",
+          "alan": 9.21,
+          "katsayi": 10,
+          "kisi_belirli": null,
+          "sayilir": true
+        },
+        {
+          "ad": "303 Yemekhane (net)",
+          "alan": 137,
+          "katsayi": 1.5,
+          "kisi_belirli": null,
+          "sayilir": true
+        },
+        {
+          "ad": "304 Mutfak",
+          "alan": 50,
+          "katsayi": 10,
+          "kisi_belirli": null,
+          "sayilir": true
+        },
+        {
+          "ad": "305 Bulaşık",
+          "alan": 14.5,
+          "katsayi": 10,
+          "kisi_belirli": null,
+          "sayilir": true
+        },
+        {
+          "ad": "306 Koridor",
+          "alan": 2.08,
+          "katsayi": 10,
+          "kisi_belirli": null,
+          "sayilir": false
+        },
+        {
+          "ad": "307 Ofis",
+          "alan": 8.16,
+          "katsayi": 10,
+          "kisi_belirli": null,
+          "sayilir": true
+        },
+        {
+          "ad": "308 WC",
+          "alan": 13.08,
+          "katsayi": 10,
+          "kisi_belirli": null,
+          "sayilir": false
+        },
+        {
+          "ad": "309 Personel",
+          "alan": 4.32,
+          "katsayi": 10,
+          "kisi_belirli": null,
+          "sayilir": true
+        },
+        {
+          "ad": "310 Rezerv alan (Depo üst)",
+          "alan": 1403.38,
+          "katsayi": 30,
+          "kisi_belirli": null,
+          "sayilir": true
+        },
+        {
+          "ad": "311 WC",
+          "alan": 9.7,
+          "katsayi": 10,
+          "kisi_belirli": null,
+          "sayilir": false
+        },
+        {
+          "ad": "312 Giyinme odası",
+          "alan": 9.52,
+          "katsayi": 10,
+          "kisi_belirli": null,
+          "sayilir": true
+        },
+        {
+          "ad": "313 Merdiven holü",
+          "alan": 8.5,
+          "katsayi": 10,
+          "kisi_belirli": null,
+          "sayilir": false
+        }
+      ],
+      "cikis_sayisi": 0,
+      "cikis_turu": "dis_kapi",
+      "mevcut_genislik_cm": 0.0,
+      "tekil_cikis_genislik_cm": 0.0,
+      "yon": "iki",
+      "en_uzak_mesafe_m": 0.0,
+      "kus_ucusu_mesafe_m": 0.0,
+      "cikmaz_mesafe_m": 0.0,
+      "mekan_diyagonal_m": 0.0,
+      "cikislar_arasi_mesafe_m": 0.0
+    }
+  ],
+  "merdivenler": [],
+  "kapilar": [],
+  "calisan_sayisi": 0.0,
+  "spr_yukseklik_h": 0.0,
+  "spr_baslik_alani_m2": 0.0,
+  "spr_koruma_alani_m2": 0.0,
+  "es_zamanli_dolap": 2,
+  "dolap_tipi": "yari_sert",
+  "hidrant_risk": "orta",
+  "statik_yukseklik_mSS": 0.0,
+  "boru_kaybi_mSS": 0.0,
+  "akma_basinci_mSS": 70.0,
+  "pompa_anma_debi_m3h": 0.0,
+  "pompa_anma_basma_mSS": 0.0,
+  "pompa_kapali_vana_basma_mSS": 0.0,
+  "pompa_150_debi_basma_mSS": 0.0,
+  "pompa_adedi": 1,
+  "yedek_pompa_adedi": 1,
+  "mevcut_su_deposu_m3": 0.0,
+  "sadece_hidrant": false,
+  "sadece_dolap": false,
+  "orman_yakin": false,
+  "arazi_egimi_yuzde": 0.0,
+  "itfaiye_son_nokta_mesafe_m": 0.0,
+  "ic_yol_genislik_m": 0.0,
+  "ic_yol_cikmaz": false,
+  "ic_yol_ic_yaricap_m": 0.0,
+  "ic_yol_dis_yaricap_m": 0.0,
+  "ic_yol_egim_yuzde": 0.0,
+  "ic_yol_serbest_yukseklik_m": 0.0,
+  "ic_yol_tasima_yuku_ton": 0.0,
+  "isaret_yuksekligi_cm": 20.0,
+  "isaret_aydinlatma": "icten",
+  "kacis_yolu_uzunlugu_m": 0.0,
+  "acil_aydinlatma_sure_dk": 0.0,
+  "acil_aydinlatma_lux_baslangic": 0.0,
+  "acil_aydinlatma_lux_bitis": 0.0,
+  "acil_aydinlatma_max_min_orani": 0.0,
+  "yangin_butonu_adedi": 0,
+  "merdiven_kovasi_yuksekligi": 0.0,
+  "basinc_kapi_alani_m2": 2.1,
+  "basinc_sizinti_debisi_m3s": 0.0,
+  "duman_mahalleri": [],
+  "yangin_yuku_bolumleri": [
+    {
+      "ad": "Depo alt",
+      "alan_m2": 974.18,
+      "kat": "1. kat",
+      "kullanim": "depo"
+    },
+    {
+      "ad": "Boyahane",
+      "alan_m2": 160.0,
+      "kat": "2. kat",
+      "kullanim": "endustriyel"
+    },
+    {
+      "ad": "Serigrafi",
+      "alan_m2": 162.0,
+      "kat": "2. kat",
+      "kullanim": "endustriyel"
+    },
+    {
+      "ad": "Montaj",
+      "alan_m2": 218.26,
+      "kat": "2. kat",
+      "kullanim": "endustriyel"
+    },
+    {
+      "ad": "Depo üst",
+      "alan_m2": 1403.38,
+      "kat": "3. kat",
+      "kullanim": "depo"
+    },
+    {
+      "ad": "Enjeksiyon",
+      "alan_m2": 822.67,
+      "kat": "1. kat",
+      "kullanim": "endustriyel"
+    }
+  ],
+  "yangin_yuku_kalemleri": [
+    {
+      "bolum": "Depo alt",
+      "malzeme": "Plastik — PE / PP (kasa, mamül)",
+      "kg": 300,
+      "isil_MJkg": 0.0
+    },
+    {
+      "bolum": "Depo alt",
+      "malzeme": "Ahşap (palet, kereste, kontrplak)",
+      "kg": 250,
+      "isil_MJkg": 0.0
+    },
+    {
+      "bolum": "Depo alt",
+      "malzeme": "Plastik — PE / PP (kasa, mamül)",
+      "kg": 500,
+      "isil_MJkg": 0.0
+    },
+    {
+      "bolum": "Boyahane",
+      "malzeme": "Plastik — PE / PP (kasa, mamül)",
+      "kg": 100,
+      "isil_MJkg": 0.0
+    },
+    {
+      "bolum": "Boyahane",
+      "malzeme": "Solvent bazlı sıvı boya / vernik (varsayım)",
+      "kg": 100,
+      "isil_MJkg": 0.0
+    },
+    {
+      "bolum": "Serigrafi",
+      "malzeme": "Plastik — PE / PP (kasa, mamül)",
+      "kg": 20,
+      "isil_MJkg": 0.0
+    },
+    {
+      "bolum": "Serigrafi",
+      "malzeme": "Plastik — PE / PP (kasa, mamül)",
+      "kg": 50,
+      "isil_MJkg": 0.0
+    },
+    {
+      "bolum": "Montaj",
+      "malzeme": "Plastik — PE / PP (kasa, mamül)",
+      "kg": 200,
+      "isil_MJkg": 0.0
+    },
+    {
+      "bolum": "Montaj",
+      "malzeme": "Karton / kâğıt (koli, ambalaj)",
+      "kg": 300,
+      "isil_MJkg": 0.0
+    },
+    {
+      "bolum": "Depo üst",
+      "malzeme": "Plastik — PE / PP (kasa, mamül)",
+      "kg": 1000,
+      "isil_MJkg": 0.0
+    },
+    {
+      "bolum": "Depo üst",
+      "malzeme": "Plastik — PE / PP (kasa, mamül)",
+      "kg": 150,
+      "isil_MJkg": 0.0
+    },
+    {
+      "bolum": "Depo üst",
+      "malzeme": "Plastik — PE / PP (kasa, mamül)",
+      "kg": 100,
+      "isil_MJkg": 0.0
+    },
+    {
+      "bolum": "Enjeksiyon",
+      "malzeme": "Plastik — PE / PP (kasa, mamül)",
+      "kg": 50,
+      "isil_MJkg": 0.0
+    }
+  ],
+  "kazan_var": false,
+  "kazan_kw": 0.0,
+  "kazan_alani_m2": 0.0,
+  "kazan_kapi_sayisi": 1,
+  "kazan_sivi_yakit": false,
+  "yakit_tank_L": 0.0,
+  "yakit_yeri": "bina_disi",
+  "yakit_havuz_L": 0.0,
+  "yagli_trafo_var": false,
+  "jenerator_var": false,
+  "lpg_tup_kg": 0.0,
+  "lpg_tank_m3": 0.0,
+  "lpg_tank_tur": "yerustu",
+  "lpg_duvar_4saat": false,
+  "lpg_alt_yalitim_2saat": false,
+  "sivi_tanklar": [],
+  "sivi_depo_alani_m2": 0.0,
+  "sivi_depo_yangin_korunum": false,
+  "sivi_depo_dayanim_dk": 0.0,
+  "sivi_depo_orijinal_kap": true,
+  "sivi_depolama_yeri": "zemin_ustu",
+  "net_beton_kolon_mm": 0.0,
+  "net_beton_kiris_mm": 0.0,
+  "net_beton_doseme_mm": 0.0,
+  "ahsap_b_mm": 0.0,
+  "ahsap_h_mm": 0.0,
+  "ahsap_yanma_hizi": 0.7,
+  "ahsap_yuzey": 4
+}
